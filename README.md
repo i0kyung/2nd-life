@@ -6,6 +6,8 @@
 
 <p align="center"><img src="docs/screens/title.jpg" width="720" alt="시작 화면"></p>
 
+<p align="center"><a href="https://i0kyung.github.io/2nd-life/"><b>▶ 지금 바로 플레이하기</b></a></p>
+
 > 📘 **[사용설명서 보기](docs/MANUAL.md)** — 조작법, 시대별 규칙, 결혼 · 자녀 · 직업, 결말 점수 계산, 자주 묻는 질문
 
 ## 어떻게 하는 게임인가요

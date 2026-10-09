@@ -1,0 +1,265 @@
+/* ============================================================
+   「제2의 인생」 공통 연출 — 모든 시대 화면이 함께 쓴다.
+   원칙: 기대 → 공개 → 반영. 내 차례는 손맛 있게, 상대 차례는 짧게.
+   ============================================================ */
+
+/* ── 화면 들어올 때: 이전 시대의 흰 빛에서 이어진다 ── */
+.fx-enter{
+  position:fixed;inset:0;z-index:900;pointer-events:none;
+  background:radial-gradient(circle at 50% 45%,#fff 0%,#fff 40%,rgba(255,255,255,.96) 100%);
+  animation:fxEnter .7s ease .05s forwards;
+}
+@keyframes fxEnter{to{opacity:0;visibility:hidden;}}
+
+/* ── 주사위: 무대 가운데서 데굴데굴 굴러 숫자 면으로 착지 ── */
+.fx-dice-wrap{
+  position:absolute;inset:0;z-index:20;pointer-events:none;
+  display:grid;place-items:center;
+  background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.55),rgba(255,255,255,0) 60%);
+  animation:fxFade .18s ease both;
+}
+.fx-dice-wrap.out{animation:fxFadeOut .22s ease forwards;}
+.fx-dice{
+  width:84px;height:84px;border-radius:20px;background:#fff;
+  box-shadow:0 14px 30px rgba(27,35,64,.22), inset 0 -6px 0 rgba(27,35,64,.08), inset 0 0 0 2px rgba(27,35,64,.08);
+  display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
+  padding:14px;gap:4px;
+  animation:fxTumble .7s cubic-bezier(.3,.7,.4,1) both;
+}
+.fx-dice.ai{animation-duration:.5s;}
+.fx-dice i{display:block;width:13px;height:13px;border-radius:50%;background:var(--ink,#1B2340);place-self:center;opacity:0;transform:scale(.4);transition:opacity .08s,transform .08s;}
+.fx-dice i.on{opacity:1;transform:scale(1);}
+.fx-dice.landed{animation:fxLand .38s cubic-bezier(.2,1.6,.4,1) both;}
+.fx-dice.landed i.on{background:var(--main,#4F7CFF);}
+.fx-dice.gold{box-shadow:0 0 0 4px #FFD86F,0 0 30px rgba(255,200,60,.7),0 14px 30px rgba(27,35,64,.22);}
+.fx-dice-num{
+  position:absolute;margin-top:128px;font-size:15px;font-weight:900;color:var(--main,#4F7CFF);
+  background:#fff;border-radius:99px;padding:5px 13px;box-shadow:0 6px 16px rgba(27,35,64,.14);
+  animation:fxPopIn .3s cubic-bezier(.2,1.5,.4,1) both;
+}
+@keyframes fxTumble{
+  0%{transform:translate(-120px,-60px) rotate(-200deg) scale(.6);}
+  45%{transform:translate(30px,10px) rotate(40deg) scale(1.05);}
+  70%{transform:translate(-10px,-14px) rotate(-12deg) scale(1);}
+  100%{transform:translate(0,0) rotate(0) scale(1);}
+}
+@keyframes fxLand{0%{transform:scale(1);}40%{transform:scale(1.18) rotate(4deg);}100%{transform:scale(1);}}
+
+/* ── 말: 내 캐릭터 얼굴 ── */
+.tok.fx-face{
+  width:26px;height:26px;border-radius:50%;overflow:hidden;background:#fff;
+  box-shadow:0 0 0 2px var(--main,#4F7CFF),0 3px 8px rgba(27,35,64,.25);
+  display:grid;place-items:center;bottom:3px;font-size:12px;
+}
+.tok.ai.fx-face{box-shadow:0 0 0 2px var(--rival,#8A94B8),0 3px 8px rgba(27,35,64,.25);}
+.tok.fx-face img{width:100%;height:100%;object-fit:cover;object-position:50% 12%;}
+.tok.ai.fx-face img{filter:hue-rotate(-32deg) saturate(1.18);}
+/* 지나간 칸에 남는 발자국 */
+.fx-foot{position:fixed;z-index:60;pointer-events:none;font-size:13px;animation:fxFoot .9s ease forwards;}
+@keyframes fxFoot{0%{opacity:.85;transform:translate(-50%,-50%) scale(1);}100%{opacity:0;transform:translate(-50%,-80%) scale(.7);}}
+
+/* ── 칸 → 무대: 칸 색이 무대로 번지는 와이프 ── */
+.scene.fx-wipe::after{
+  content:"";position:absolute;inset:0;z-index:4;pointer-events:none;
+  background:var(--stage-main,#4F7CFF);
+  animation:fxWipe .5s cubic-bezier(.6,0,.3,1) forwards;
+}
+@keyframes fxWipe{
+  0%{clip-path:inset(0 100% 0 0);opacity:.55;}
+  45%{clip-path:inset(0 0 0 0);opacity:.35;}
+  100%{clip-path:inset(0 0 0 100%);opacity:0;}
+}
+.scene-ico.fx-ico{animation:fxIco .6s cubic-bezier(.2,.9,.3,1) both;}
+@keyframes fxIco{0%{transform:translateY(-52%) scale(2.4) rotate(-12deg);opacity:.0;}50%{opacity:.25;}100%{transform:translateY(-52%) scale(1) rotate(0);opacity:.09;}}
+
+/* ── 선택 결과: 스탯 조각이 내 패널 게이지로 날아간다 ── */
+.fx-fly{
+  position:fixed;z-index:500;pointer-events:none;
+  font-size:12.5px;font-weight:900;padding:4px 10px;border-radius:99px;
+  background:#fff;box-shadow:0 6px 16px rgba(27,35,64,.2);white-space:nowrap;
+  display:flex;align-items:center;gap:4px;
+}
+.fx-fly svg{width:13px;height:13px;}
+.fx-fly.up{color:var(--pos,#1F9B78);}
+.fx-fly.down{color:var(--neg,#E0476B);}
+.grade-chip{position:relative;}
+.fx-grade-pop{
+  position:absolute;right:-6px;top:-15px;z-index:5;
+  font-size:10px;font-weight:900;color:#fff;background:var(--pos,#1F9B78);
+  border-radius:99px;padding:2px 7px;white-space:nowrap;pointer-events:none;
+  animation:fxGradePop 1.6s ease forwards;
+}
+.fx-grade-pop.down{background:var(--neg,#E0476B);}
+@keyframes fxGradePop{0%{opacity:0;transform:translateY(6px) scale(.6);}15%{opacity:1;transform:translateY(0) scale(1.12);}25%{transform:scale(1);}80%{opacity:1;}100%{opacity:0;transform:translateY(-6px);}}
+.grade-chip.flash .grade-fill{animation:fxGauge .7s ease;}
+@keyframes fxGauge{0%{filter:brightness(1.6);}100%{filter:none;}}
+
+/* ── 기회 카드: 덱에서 부채꼴로 깔린다 ── */
+.card-row .card{animation:fxDeal .5s cubic-bezier(.2,.9,.3,1.1) both;}
+.card-row .card:nth-child(1){animation-delay:.05s;--fx-r:-8deg;}
+.card-row .card:nth-child(2){animation-delay:.15s;--fx-r:0deg;}
+.card-row .card:nth-child(3){animation-delay:.25s;--fx-r:8deg;}
+@keyframes fxDeal{0%{opacity:0;transform:translate(0,-140px) rotate(var(--fx-r,0)) scale(.7);}100%{opacity:1;transform:none;}}
+.card.rare{isolation:isolate;}
+.card.rare.flip::before{
+  content:"";position:absolute;inset:-3px;border-radius:14px;z-index:-1;
+  background:conic-gradient(from var(--fx-a,0deg),#FF6FB1,#FFD86F,#56DFC3,#4F7CFF,#A98BFF,#FF6FB1);
+  animation:fxSpin 2.4s linear infinite;
+}
+@property --fx-a{syntax:'<angle>';inherits:false;initial-value:0deg;}
+@keyframes fxSpin{to{--fx-a:360deg;}}
+.card.flip{animation:fxCardChosen .5s ease .45s both;}
+@keyframes fxCardChosen{50%{transform:translateY(-10px) scale(1.06);}100%{transform:translateY(-4px) scale(1.03);}}
+
+/* ── 상대 차례: 커서가 선택지를 고민하다 콕 ── */
+.fx-cursor{
+  position:fixed;z-index:450;pointer-events:none;font-size:24px;line-height:1;
+  transition:left .32s cubic-bezier(.4,0,.2,1),top .32s cubic-bezier(.4,0,.2,1);
+  filter:drop-shadow(0 3px 4px rgba(0,0,0,.25));
+}
+.fx-cursor.tap{animation:fxTap .3s ease;}
+@keyframes fxTap{50%{transform:scale(.8) translateY(3px);}}
+.act-btn.ai-thinking.fx-hover{border-color:var(--rival,#8A94B8);transform:translateY(-2px);}
+.wait-ai::after,.ap-label.fx-dots::after{content:"";display:inline-block;width:1.2em;text-align:left;animation:fxDots 1s steps(4) infinite;}
+@keyframes fxDots{0%{content:"";}25%{content:".";}50%{content:"..";}75%{content:"...";}}
+
+/* ── 라운드 전환: 해가 지고 달이 뜬다 ── */
+.fx-sky{
+  position:fixed;inset:0;z-index:700;pointer-events:none;overflow:hidden;
+  background:linear-gradient(180deg,#FFD9A8 0%,#FFB4C8 45%,#B9A8FF 100%);
+  animation:fxSky 1.25s ease forwards;
+}
+.fx-sky .sun,.fx-sky .moon{position:absolute;left:50%;font-size:64px;transform:translateX(-50%);}
+.fx-sky .sun{animation:fxSun 1.25s ease forwards;}
+.fx-sky .moon{animation:fxMoon 1.25s ease forwards;}
+.fx-sky .txt{
+  position:absolute;left:50%;top:56%;transform:translateX(-50%);
+  font-size:22px;font-weight:900;color:#fff;text-shadow:0 2px 10px rgba(27,35,64,.35);white-space:nowrap;
+  animation:fxSkyTxt 1.25s ease forwards;
+}
+.fx-sky .star{position:absolute;color:#fff;font-size:12px;opacity:0;animation:fxStar 1.25s ease forwards;}
+@keyframes fxSky{
+  0%{opacity:0;filter:none;}
+  15%{opacity:1;}
+  55%{filter:hue-rotate(0) brightness(1);}
+  75%{opacity:1;filter:brightness(.45) saturate(1.3);}
+  100%{opacity:0;filter:brightness(.45) saturate(1.3);}
+}
+@keyframes fxSun{0%{top:18%;}60%{top:75%;opacity:1;}100%{top:90%;opacity:0;}}
+@keyframes fxMoon{0%{top:100%;opacity:0;}50%{top:100%;opacity:0;}85%{top:22%;opacity:1;}100%{top:20%;opacity:0;}}
+@keyframes fxSkyTxt{0%{opacity:0;margin-top:10px;}25%{opacity:1;margin-top:0;}80%{opacity:1;}100%{opacity:0;}}
+@keyframes fxStar{0%,50%{opacity:0;}75%{opacity:1;}100%{opacity:0;}}
+#roundLabel.fx-roll{display:inline-block;animation:fxRoll .45s cubic-bezier(.2,1.4,.4,1);}
+@keyframes fxRoll{0%{transform:translateY(-100%);opacity:0;}100%{transform:none;opacity:1;}}
+
+/* ── 시대 전환: 지금의 나가 빛에 싸여 다음 나이로 자란다 ── */
+.fx-grow{
+  position:fixed;inset:0;z-index:950;display:grid;place-items:center;
+  background:radial-gradient(circle at 50% 45%,rgba(255,255,255,.92),rgba(238,241,247,.97) 70%);
+  animation:fxFade .35s ease both;
+}
+.fx-grow .stagebox{position:relative;width:min(80vw,360px);height:min(52vh,360px);display:grid;place-items:end center;}
+.fx-grow .halo{
+  position:absolute;left:50%;top:50%;width:260px;height:260px;margin:-130px 0 0 -130px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,236,170,.95),rgba(255,214,120,.35) 45%,transparent 70%);
+  opacity:0;animation:fxHalo 2.3s ease forwards;
+}
+.fx-grow img{position:absolute;bottom:0;left:50%;height:100%;max-width:100%;object-fit:contain;transform:translateX(-50%);}
+.fx-grow .old{animation:fxOld 2.3s ease forwards;}
+.fx-grow .new{opacity:0;animation:fxNew 2.3s ease forwards;}
+.fx-grow .fb{position:absolute;bottom:20%;left:50%;transform:translateX(-50%);font-size:96px;}
+.fx-grow .age{margin-top:18px;text-align:center;font-weight:900;color:var(--ink,#1B2340);}
+.fx-grow .age b{display:block;font-size:46px;letter-spacing:-1px;color:var(--main,#4F7CFF);}
+.fx-grow .age span{font-size:17px;}
+.fx-grow .flash{position:fixed;inset:0;background:#fff;opacity:0;animation:fxFlash 2.3s ease forwards;pointer-events:none;}
+.fx-grow .spark{position:absolute;font-size:20px;opacity:0;animation:fxSpark 1.4s ease forwards;}
+@keyframes fxHalo{0%{opacity:0;transform:scale(.4);}35%{opacity:1;transform:scale(1.1);}100%{opacity:.6;transform:scale(1.25);}}
+@keyframes fxOld{0%{opacity:1;filter:none;}35%{opacity:1;filter:brightness(1.6) blur(0);}50%{opacity:0;filter:brightness(3) blur(6px);transform:translateX(-50%) scale(1.05);}100%{opacity:0;}}
+@keyframes fxNew{0%,45%{opacity:0;filter:brightness(3) blur(8px);transform:translateX(-50%) scale(.92);}70%{opacity:1;filter:brightness(1.2);transform:translateX(-50%) scale(1.02);}100%{opacity:1;filter:none;transform:translateX(-50%) scale(1);}}
+@keyframes fxFlash{0%,40%{opacity:0;}48%{opacity:.85;}62%{opacity:0;}88%{opacity:0;}100%{opacity:1;}}
+@keyframes fxSpark{0%{opacity:0;transform:translate(0,0) scale(.4);}30%{opacity:1;}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1.1);}}
+
+
+/* ── 시대별 테마 배경 (넘어갈 때 · 들어올 때 공통) ── */
+.fx-grow.themed{background:#fff;}
+.themed .gbg{position:fixed;inset:0;background-size:cover;background-position:center;animation:fxKen 3s ease-out forwards;}
+.themed .gtint{position:fixed;inset:0;background:linear-gradient(160deg,var(--c1),var(--c2));opacity:.72;}
+.themed.dark .gtint{opacity:.82;}
+.themed .gpart{position:fixed;inset:0;overflow:hidden;pointer-events:none;}
+.themed .pt{position:absolute;line-height:1;will-change:transform;animation:var(--anim) var(--d) linear var(--dl) infinite;}
+.themed .pt.m-fall{top:-8%;--anim:fxPtFall;}
+.themed .pt.m-rise{bottom:-10%;--anim:fxPtRise;}
+.themed .pt.m-toss{bottom:-10%;--anim:fxPtToss;animation-timing-function:cubic-bezier(.2,.7,.4,1);}
+.themed .pt.m-fly{top:auto;bottom:calc(10% + var(--dx) * .25);left:-10% !important;--anim:fxPtFly;}
+.themed .pt.m-twinkle{--anim:fxPtTw;color:#FFF7CF;text-shadow:0 0 8px rgba(255,240,180,.9);}
+@keyframes fxKen{from{transform:scale(1.16);filter:blur(3px) saturate(1.2);}to{transform:scale(1.02);filter:blur(1px) saturate(1.1);}}
+@keyframes fxPtFall{0%{transform:translate(0,0) rotate(0);}100%{transform:translate(var(--dx),118vh) rotate(540deg);}}
+@keyframes fxPtRise{0%{transform:translate(0,0);opacity:0;}10%{opacity:1;}100%{transform:translate(calc(var(--dx)*.5),-120vh);opacity:.8;}}
+@keyframes fxPtToss{0%{transform:translate(0,0) rotate(0);opacity:0;}10%{opacity:1;}55%{transform:translate(calc(var(--dx)*.6),-78vh) rotate(260deg);}100%{transform:translate(var(--dx),-10vh) rotate(520deg);opacity:0;}}
+@keyframes fxPtFly{0%{transform:translate(0,0) rotate(-8deg);}50%{transform:translate(60vw,-18vh) rotate(6deg);}100%{transform:translate(125vw,-6vh) rotate(-4deg);}}
+@keyframes fxPtTw{0%,100%{opacity:.15;transform:scale(.7);}50%{opacity:1;transform:scale(1.15);}}
+.themed .prop{position:fixed;pointer-events:none;}
+.p-balloon{right:8%;bottom:-30%;display:flex;gap:6px;font-size:58px;animation:fxPropRise 3s ease-out forwards;}
+.p-balloon span:nth-child(2){transform:translateY(-24px);}
+.p-bell{right:10%;top:10%;font-size:76px;transform-origin:50% 0;animation:fxBell .5s ease-in-out infinite alternate;}
+.p-school{left:6%;bottom:-20%;font-size:120px;animation:fxPropRise 1.4s cubic-bezier(.2,1.3,.4,1) .2s forwards;}
+.p-books{left:8%;bottom:8%;display:flex;flex-direction:column-reverse;font-size:54px;line-height:.75;}
+.p-books span{opacity:0;animation:fxDrop .5s cubic-bezier(.2,1.4,.4,1) forwards;}
+.p-books span:nth-child(2){animation-delay:.2s;}.p-books span:nth-child(3){animation-delay:.4s;}
+.p-moon{right:9%;top:8%;font-size:90px;filter:drop-shadow(0 0 26px rgba(255,236,160,.85));animation:fxFade 1.2s ease both;}
+.p-dday{left:50%;top:7%;transform:translateX(-50%);padding:7px 16px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;font-weight:900;letter-spacing:1px;animation:fxFade .8s ease .3s both;}
+.p-caps{left:50%;bottom:16%;transform:translateX(-50%);display:flex;gap:30px;font-size:52px;}
+.p-caps span{animation:fxCap 1.6s cubic-bezier(.2,.8,.3,1) both;}
+.p-caps span:nth-child(2){animation-delay:.15s;}.p-caps span:nth-child(3){animation-delay:.3s;}
+.p-sky{left:0;right:0;bottom:0;height:44vh;display:flex;align-items:flex-end;gap:1.2vw;padding:0 2vw;}
+.p-sky i{flex:1;background:linear-gradient(#2A2350,#151230);border-radius:4px 4px 0 0;transform-origin:bottom;transform:scaleY(0);animation:fxBuild .9s cubic-bezier(.2,1.2,.4,1) forwards;position:relative;overflow:hidden;}
+.p-sky u{position:absolute;inset:8px 6px;background:repeating-linear-gradient(0deg,transparent 0 10px,rgba(255,214,120,.9) 10px 16px),repeating-linear-gradient(90deg,transparent 0 6px,rgba(21,18,48,1) 6px 12px);opacity:0;animation:fxFade .5s ease forwards;}
+.p-sun{left:50%;top:22%;width:220px;height:220px;margin-left:-110px;border-radius:50%;background:radial-gradient(circle,#FFE6A6,#FF9F45 55%,rgba(255,120,60,0) 72%);animation:fxSunset 3s ease-in forwards;}
+.p-comet{left:-10%;top:12%;font-size:64px;animation:fxComet 1.8s ease-in .4s both;}
+@keyframes fxPropRise{to{transform:translateY(-75vh);}}
+@keyframes fxBell{from{transform:rotate(-16deg);}to{transform:rotate(16deg);}}
+@keyframes fxDrop{0%{opacity:0;transform:translateY(-60vh) rotate(-20deg);}100%{opacity:1;transform:none;}}
+@keyframes fxCap{0%{transform:translateY(0) rotate(0);}50%{transform:translateY(-48vh) rotate(200deg);}100%{transform:translateY(-14vh) rotate(360deg);opacity:0;}}
+@keyframes fxBuild{to{transform:scaleY(1);}}
+@keyframes fxSunset{0%{transform:translateY(-6vh);}100%{transform:translateY(38vh);opacity:.85;}}
+@keyframes fxComet{0%{transform:translate(0,0);opacity:0;}15%{opacity:1;}100%{transform:translate(120vw,34vh);opacity:0;}}
+.fx-grow .gmain{position:relative;z-index:3;}
+.fx-grow.themed .flash{animation-duration:2.9s;}
+.fx-grow.themed .halo{z-index:0;}
+/* 캐릭터 그림은 흰 바탕이라 — 숨기지 말고 인생 앨범의 사진 한 장처럼 액자에 담는다 */
+.fx-grow.themed .stagebox{width:min(64vw,270px);height:min(46vh,330px);margin:0 auto;border-radius:26px;overflow:hidden;
+  background:linear-gradient(#fff,#F3F5FB);border:6px solid rgba(255,255,255,.95);box-shadow:0 18px 40px rgba(20,20,60,.28);
+  animation:fxFrame 2.9s cubic-bezier(.2,1.1,.4,1) both;}
+.fx-grow.themed .stagebox img{height:94%;}
+@keyframes fxFrame{0%{transform:translateY(24px) rotate(-3deg) scale(.92);opacity:0;}14%{transform:rotate(-1.5deg);opacity:1;}55%{transform:rotate(1.5deg) scale(1.03);}100%{transform:rotate(0) scale(1);}}
+.fx-grow.themed .age{margin-top:14px;padding:12px 26px 14px;border-radius:22px;background:rgba(255,255,255,.88);box-shadow:0 10px 30px rgba(20,20,50,.18);backdrop-filter:blur(6px);}
+.fx-grow .age em{display:inline-block;font-style:normal;font-size:13px;font-weight:900;padding:3px 12px;border-radius:999px;background:var(--ink,#1B2340);color:#fff;margin-bottom:4px;}
+.fx-grow .age small{display:block;margin-top:4px;font-size:13px;font-weight:700;opacity:.62;}
+/* 들어올 때: 테마 하늘 + 장소 카드가 1초 머물다 걷힌다 */
+.fx-enter.themed{background:none;animation:fxEnter .7s ease 1.2s forwards;}
+.fx-enter .ecard{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;text-align:center;padding:16px 30px 18px;border-radius:24px;background:rgba(255,255,255,.9);box-shadow:0 12px 34px rgba(20,20,50,.2);animation:fxECard 1.9s cubic-bezier(.2,1.2,.4,1) both;}
+.fx-enter .ecard span{display:inline-block;font-size:13px;font-weight:900;padding:3px 12px;border-radius:999px;background:var(--ink,#1B2340);color:#fff;}
+.fx-enter .ecard b{display:block;margin-top:6px;font-size:24px;font-weight:900;color:var(--ink,#1B2340);letter-spacing:-.5px;}
+@keyframes fxECard{0%{opacity:0;transform:translate(-50%,-40%) scale(.9);}22%{opacity:1;transform:translate(-50%,-50%) scale(1);}75%{opacity:1;}100%{opacity:0;transform:translate(-50%,-60%) scale(.98);}}
+
+/* ── 공통 ── */
+@keyframes fxFade{from{opacity:0;}to{opacity:1;}}
+@keyframes fxFadeOut{to{opacity:0;}}
+@keyframes fxPopIn{0%{opacity:0;transform:scale(.6);}100%{opacity:1;transform:scale(1);}}
+.overlay.on .modal{animation:fxModal .32s cubic-bezier(.2,.9,.3,1.15) both;}
+@keyframes fxModal{0%{opacity:0;transform:translateY(16px) scale(.96);}100%{opacity:1;transform:none;}}
+.act-btn{transition:transform .14s, background .15s, border-color .15s, box-shadow .15s;}
+.act-btn:not(.ai-thinking):hover{transform:translateY(-2px);box-shadow:0 6px 14px rgba(79,124,255,.16);}
+.action-panel .act-grid > .act-btn{animation:fxChoiceIn .3s ease both;}
+.action-panel .act-grid > .act-btn:nth-child(2){animation-delay:.06s;}
+.action-panel .act-grid > .act-btn:nth-child(3){animation-delay:.12s;}
+.action-panel .act-grid > .act-btn:nth-child(4){animation-delay:.18s;}
+@keyframes fxChoiceIn{0%{opacity:0;transform:translateY(8px);}100%{opacity:1;transform:none;}}
+
+/* 움직임 줄이기: 장식 애니메이션은 끄고 짧은 페이드만 남긴다 */
+@media (prefers-reduced-motion: reduce){
+  .fx-dice,.fx-dice.landed,.card-row .card,.card.flip,.scene-ico.fx-ico,.action-panel .act-grid > .act-btn{animation:none !important;}
+  .scene.fx-wipe::after{display:none;}
+  .fx-sky,.fx-grow{animation-duration:.2s !important;}
+  .themed .pt,.themed .prop{display:none !important;}
+}

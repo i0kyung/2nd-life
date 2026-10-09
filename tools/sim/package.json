@@ -1,0 +1,15 @@
+{
+  "name": "second-life-sim",
+  "private": true,
+  "description": "「제2의 인생」 자동 플레이 · 밸런스 시뮬레이션 도구",
+  "type": "commonjs",
+  "scripts": {
+    "play": "node play.js ../..",
+    "sim": "node sim.js . 12 4 14 sim family,career,balanced,random",
+    "scores": "node scores.js ../../result.html runs/sim",
+    "transitions": "node cap_trans.js ../.."
+  },
+  "dependencies": {
+    "puppeteer-core": "^23.11.1"
+  }
+}

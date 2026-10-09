@@ -1,0 +1,766 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>제2의 인생</title>
+<style>
+  :root{
+    --blue:#4f8cff;
+    --mint:#56dfc3;
+    --pink:#ff7fb2;
+    --coral:#ff8f7a;
+    --yellow:#ffd86f;
+    --lilac:#a98bff;
+    --violet:#7657d8;
+    --navy:#17234d;
+    --ink:#26315f;
+    --muted:#65709a;
+    --glass:rgba(255,255,255,.76);
+    --glass-strong:rgba(255,255,255,.88);
+    --line:rgba(255,255,255,.82);
+    --shadow:0 28px 80px rgba(79,91,160,.28);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{min-height:100%;}
+  body{
+    font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+    color:var(--navy);
+    min-height:100vh;
+    overflow-x:hidden;
+    background:#f6f1ff;
+  }
+
+  body::before{
+    content:"";
+    position:fixed;
+    inset:-28px;
+    background:
+      linear-gradient(115deg, rgba(255,255,255,.42), rgba(222,245,255,.12) 48%, rgba(255,224,239,.35)),
+      url("./image/bg/child.png") center/cover no-repeat;
+    filter:blur(7px) saturate(1.08) brightness(1.04);
+    transform:scale(1.04);
+    z-index:-4;
+  }
+  body::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    background:
+      radial-gradient(760px 460px at 14% 18%, rgba(255,127,178,.28), transparent 62%),
+      radial-gradient(680px 520px at 88% 8%, rgba(86,223,195,.24), transparent 58%),
+      radial-gradient(620px 500px at 76% 86%, rgba(255,216,111,.24), transparent 60%),
+      linear-gradient(135deg, rgba(255,255,255,.62), rgba(244,239,255,.34) 48%, rgba(232,250,255,.42));
+    backdrop-filter:blur(10px);
+    z-index:-3;
+  }
+
+  .dream-shell{
+    position:relative;
+    min-height:100vh;
+    display:grid;
+    place-items:center;
+    padding:34px 18px;
+    overflow:hidden;
+  }
+  .dream-shell::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(255,255,255,.88) 0 1px, transparent 2px),
+      radial-gradient(circle at 72% 24%, rgba(255,255,255,.76) 0 1px, transparent 2px),
+      radial-gradient(circle at 45% 72%, rgba(255,255,255,.7) 0 1px, transparent 2px),
+      radial-gradient(circle at 86% 68%, rgba(255,255,255,.66) 0 1px, transparent 2px);
+    background-size:170px 170px, 230px 230px, 190px 190px, 260px 260px;
+    opacity:.9;
+    animation:sparkleDrift 20s linear infinite;
+    pointer-events:none;
+  }
+  .dream-shell::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+      radial-gradient(circle at 10% 72%, rgba(169,139,255,.24), transparent 30%),
+      radial-gradient(circle at 90% 34%, rgba(255,143,122,.2), transparent 32%);
+    mix-blend-mode:screen;
+    pointer-events:none;
+  }
+  @keyframes sparkleDrift{
+    from{transform:translate3d(0,0,0);}
+    to{transform:translate3d(-80px,-64px,0);}
+  }
+
+  .main-card{
+    position:relative;
+    z-index:2;
+    width:min(100%, 510px);
+    padding:28px;
+    border:1px solid rgba(255,255,255,.78);
+    border-radius:30px;
+    background:linear-gradient(145deg, rgba(255,255,255,.88), rgba(255,255,255,.68));
+    box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,.88);
+    backdrop-filter:blur(18px) saturate(1.16);
+    animation:cardIn .62s cubic-bezier(.2,.8,.22,1) both;
+  }
+  .main-card::before{
+    content:"";
+    position:absolute;
+    inset:10px;
+    border-radius:23px;
+    border:1px solid rgba(255,255,255,.54);
+    pointer-events:none;
+  }
+  @keyframes cardIn{
+    from{opacity:0;transform:translateY(18px) scale(.985);}
+    to{opacity:1;transform:none;}
+  }
+
+  .badge-top{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:7px 13px;
+    border-radius:999px;
+    background:rgba(255,255,255,.8);
+    color:#4f437f;
+    font-size:13px;
+    font-weight:900;
+    box-shadow:0 8px 22px rgba(118,87,216,.13), inset 0 0 0 1px rgba(169,139,255,.25);
+  }
+  .app-mark{display:block;margin:0 0 12px;width:68px;height:68px;border-radius:20px;box-shadow:0 10px 24px rgba(91,139,255,.35);animation:markIn .8s cubic-bezier(.2,1.4,.4,1) both, markBob 3.2s ease-in-out .8s infinite;}
+  @keyframes markIn{from{opacity:0;transform:translateY(-14px) scale(.7) rotate(-8deg);}to{opacity:1;transform:none;}}
+  @keyframes markBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+  @media (prefers-reduced-motion: reduce){.app-mark{animation:none;}}
+  h1{
+    margin:14px 0 8px;
+    font-size:clamp(44px, 11vw, 64px);
+    line-height:1;
+    font-weight:950;
+    letter-spacing:0;
+    color:var(--navy);
+    text-shadow:0 2px 0 rgba(255,255,255,.9), 0 12px 28px rgba(86,96,178,.18);
+  }
+  .subtitle{
+    margin-bottom:22px;
+    color:#3d4775;
+    font-size:15px;
+    line-height:1.55;
+    font-weight:800;
+  }
+
+  .field{margin-bottom:18px;}
+  .label{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin:0 0 9px 3px;
+    color:var(--ink);
+    font-size:13px;
+    font-weight:950;
+  }
+  .label::before{
+    content:"";
+    width:9px;
+    height:9px;
+    border-radius:50%;
+    background:linear-gradient(135deg, var(--mint), var(--blue));
+    box-shadow:0 0 0 5px rgba(86,223,195,.16);
+  }
+  input[type=text]{
+    width:100%;
+    min-height:54px;
+    padding:14px 17px;
+    border:1px solid rgba(79,140,255,.24);
+    border-radius:18px;
+    outline:none;
+    background:rgba(255,255,255,.9);
+    color:var(--navy);
+    font:800 17px/1.2 inherit;
+    box-shadow:0 12px 30px rgba(62,79,145,.08), inset 0 1px 0 rgba(255,255,255,.9);
+    transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  }
+  input[type=text]::placeholder{color:#9aa4c8;font-weight:750;}
+  input[type=text]:focus{
+    border-color:rgba(79,140,255,.72);
+    box-shadow:0 0 0 5px rgba(79,140,255,.13), 0 14px 34px rgba(62,79,145,.12);
+    transform:translateY(-1px);
+  }
+
+  .gender-row{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+  .gender{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-height:178px;
+    padding:12px 10px 14px;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,.8);
+    border-radius:22px;
+    background:linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.68));
+    box-shadow:0 14px 32px rgba(63,78,142,.11), inset 0 1px 0 rgba(255,255,255,.88);
+    cursor:pointer;
+    user-select:none;
+    transition:transform .24s ease, box-shadow .24s ease, border-color .24s ease, background .24s ease;
+  }
+  .gender::before{
+    content:"";
+    position:absolute;
+    inset:auto -20px -36px;
+    height:92px;
+    border-radius:50%;
+    background:rgba(255,255,255,.5);
+    filter:blur(2px);
+  }
+  .gender img{
+    position:relative;
+    z-index:1;
+    width:min(112px, 86%);
+    height:118px;
+    object-fit:contain;
+    filter:drop-shadow(0 12px 16px rgba(52,65,130,.16));
+    transition:transform .28s ease, filter .28s ease;
+  }
+  .gender .fallback{
+    display:none;
+    position:relative;
+    z-index:1;
+    font-size:72px;
+    line-height:118px;
+  }
+  .gender .gname{
+    position:relative;
+    z-index:1;
+    margin-top:4px;
+    color:var(--navy);
+    font-size:15px;
+    font-weight:950;
+  }
+  .gender .gsub{
+    position:relative;
+    z-index:1;
+    margin-top:3px;
+    color:#7781a7;
+    font-size:11px;
+    font-weight:800;
+  }
+  .gender:hover{
+    transform:translateY(-6px);
+    box-shadow:0 22px 42px rgba(63,78,142,.16), inset 0 1px 0 rgba(255,255,255,.92);
+  }
+  .gender:hover img{transform:scale(1.08);filter:drop-shadow(0 16px 18px rgba(52,65,130,.2));}
+  .gender.sel-female{
+    border-color:rgba(255,127,178,.75);
+    background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,239,247,.82));
+    box-shadow:0 0 0 5px rgba(255,127,178,.14), 0 24px 44px rgba(255,127,178,.18);
+  }
+  .gender.sel-male{
+    border-color:rgba(79,140,255,.75);
+    background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(236,246,255,.84));
+    box-shadow:0 0 0 5px rgba(79,140,255,.14), 0 24px 44px rgba(79,140,255,.18);
+  }
+  .gender.pick{animation:softPick .34s ease;}
+  @keyframes softPick{
+    0%{transform:translateY(-6px) scale(1);}
+    45%{transform:translateY(-7px) scale(1.025);}
+    100%{transform:translateY(-6px) scale(1);}
+  }
+
+  .err{
+    min-height:19px;
+    margin:-4px 0 11px 4px;
+    color:#e04472;
+    font-size:13px;
+    font-weight:900;
+  }
+  .btn-row{display:grid;grid-template-columns:1fr;gap:10px;}
+  .btn{
+    border:0;
+    border-radius:19px;
+    cursor:pointer;
+    font-family:inherit;
+    font-weight:950;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    transition:transform .14s ease, filter .14s ease, box-shadow .14s ease;
+  }
+  .btn:active{transform:translateY(3px) scale(.99);}
+  .btn-resume[hidden]{display:none !important;}
+  .btn-resume{margin-bottom:10px;border:2px solid rgba(91,139,255,.45);color:#3E5FD8;}
+  .btn-resume small{display:block;font-size:12px;font-weight:600;opacity:.7;margin-top:2px;}
+  .btn-start{
+    min-height:58px;
+    color:#fff;
+    font-size:20px;
+    background:linear-gradient(105deg, #4f8cff, #8c70ff 56%, #ff7fb2);
+    box-shadow:0 10px 0 #4b5fc6, 0 22px 34px rgba(88,107,219,.28);
+    text-shadow:0 1px 0 rgba(0,0,0,.14);
+  }
+  .btn-start:hover{filter:brightness(1.055) saturate(1.04);box-shadow:0 12px 0 #4b5fc6, 0 26px 38px rgba(88,107,219,.32);}
+  .btn-start:active{box-shadow:0 5px 0 #4b5fc6, 0 12px 22px rgba(88,107,219,.22);}
+  .btn-how{
+    min-height:47px;
+    color:#313b6f;
+    font-size:15px;
+    background:rgba(255,255,255,.86);
+    box-shadow:0 7px 0 rgba(195,205,242,.72), inset 0 0 0 1px rgba(255,255,255,.8);
+  }
+  .btn-how:hover{filter:brightness(1.03);}
+  .btn-how:active{box-shadow:0 3px 0 rgba(195,205,242,.72);}
+  .copyright{margin:14px 0 0;text-align:center;font-size:12px;font-weight:600;color:rgba(27,35,64,.55);letter-spacing:.2px;}
+  footer{
+    margin-top:14px;
+    text-align:center;
+    color:#7781a7;
+    font-size:12px;
+    font-weight:850;
+  }
+
+  .overlay{
+    position:fixed;
+    inset:0;
+    z-index:50;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    background:rgba(23,35,77,.42);
+    backdrop-filter:blur(10px);
+  }
+  .overlay.on{display:flex;animation:fade .2s ease both;}
+  @keyframes fade{from{opacity:0;}to{opacity:1;}}
+  .modal{
+    width:min(100%, 500px);
+    max-height:86vh;
+    overflow:auto;
+    padding:25px;
+    border:1px solid rgba(255,255,255,.78);
+    border-radius:28px;
+    background:linear-gradient(145deg, rgba(255,255,255,.94), rgba(248,250,255,.86));
+    box-shadow:0 34px 80px rgba(17,26,64,.34);
+    animation:modalIn .28s cubic-bezier(.2,.85,.25,1) both;
+  }
+  @keyframes modalIn{from{opacity:0;transform:translateY(18px) scale(.97);}to{opacity:1;transform:none;}}
+  .modal h2{font-size:25px;line-height:1.2;margin-bottom:15px;color:var(--navy);}
+  .rule-grid{display:grid;gap:10px;}
+  .rule{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    min-height:58px;
+    padding:12px 13px;
+    border-radius:18px;
+    background:rgba(255,255,255,.76);
+    box-shadow:inset 0 0 0 1px rgba(160,174,220,.18), 0 10px 22px rgba(62,79,145,.07);
+    color:#3d4775;
+    font-size:14px;
+    font-weight:850;
+    line-height:1.35;
+  }
+  .rule .ri{font-size:25px;flex:0 0 32px;text-align:center;}
+  .modal .btn-close{
+    width:100%;
+    min-height:49px;
+    margin-top:14px;
+    color:#fff;
+    font-size:16px;
+    background:linear-gradient(100deg, var(--mint), var(--blue));
+    box-shadow:0 8px 0 #34a6c9;
+  }
+  .modal .btn-close:active{box-shadow:0 3px 0 #34a6c9;}
+  .copy-lines{
+    display:grid;
+    gap:5px;
+    margin-bottom:22px;
+    color:#3d4775;
+    font-size:15px;
+    line-height:1.45;
+    font-weight:850;
+  }
+  .copy-lines span{display:block;}
+  .copy-lines .copy-main{color:var(--navy);font-size:17px;font-weight:950;}
+  .birth-overlay{
+    position:fixed;
+    inset:0;
+    z-index:80;
+    display:none;
+    place-items:center;
+    padding:24px;
+    overflow:hidden;
+    background:
+      radial-gradient(520px 320px at 48% 42%, rgba(255,255,255,.96), rgba(255,255,255,.36) 62%, transparent 74%),
+      radial-gradient(700px 520px at 30% 18%, rgba(255,216,111,.34), transparent 62%),
+      radial-gradient(700px 520px at 78% 18%, rgba(86,223,195,.28), transparent 60%),
+      linear-gradient(145deg, rgba(250,246,255,.94), rgba(226,248,255,.9) 46%, rgba(255,235,245,.92));
+    backdrop-filter:blur(16px) saturate(1.1);
+  }
+  .birth-overlay.on{display:grid;animation:birthFade .32s ease both;}
+  .birth-overlay::before,
+  .birth-overlay::after{
+    content:"";
+    position:absolute;
+    inset:-12%;
+    pointer-events:none;
+    background:
+      radial-gradient(circle at 22% 30%, rgba(255,255,255,.94) 0 2px, transparent 3px),
+      radial-gradient(circle at 64% 20%, rgba(255,255,255,.72) 0 1px, transparent 3px),
+      radial-gradient(circle at 78% 68%, rgba(255,255,255,.82) 0 2px, transparent 4px),
+      radial-gradient(circle at 36% 78%, rgba(255,255,255,.7) 0 1px, transparent 3px);
+    background-size:170px 170px, 230px 230px, 210px 210px, 190px 190px;
+    animation:birthSparkle 7s linear infinite;
+  }
+  .birth-overlay::after{
+    filter:blur(16px);
+    opacity:.58;
+    background:
+      radial-gradient(circle at 20% 72%, rgba(255,127,178,.42), transparent 22%),
+      radial-gradient(circle at 82% 24%, rgba(169,139,255,.42), transparent 24%),
+      radial-gradient(circle at 54% 18%, rgba(255,216,111,.32), transparent 20%);
+    animation:birthGlow 2.2s ease-in-out infinite alternate;
+  }
+  .birth-card{
+    position:relative;
+    z-index:2;
+    width:min(100%, 430px);
+    padding:30px 24px;
+    border-radius:30px;
+    text-align:center;
+    color:var(--navy);
+    background:linear-gradient(145deg, rgba(255,255,255,.92), rgba(255,255,255,.72));
+    border:1px solid rgba(255,255,255,.86);
+    box-shadow:0 30px 80px rgba(79,91,160,.24), inset 0 1px 0 rgba(255,255,255,.9);
+    animation:birthPop .58s cubic-bezier(.2,.86,.18,1.16) both;
+  }
+  .birth-cry{font-size:19px;font-weight:950;color:#ff6f9f;margin-bottom:9px;animation:babyCry .75s ease-in-out infinite alternate;}
+  .birth-title{font-size:clamp(29px,7vw,40px);font-weight:950;line-height:1.18;text-shadow:0 2px 0 rgba(255,255,255,.9);}
+  .birth-sub{margin-top:10px;color:#5e6895;font-size:14px;font-weight:850;}
+  .birth-baby{height:136px;margin:18px auto 4px;display:flex;align-items:center;justify-content:center;}
+  .birth-baby img{height:136px;max-width:78%;object-fit:contain;filter:drop-shadow(0 18px 24px rgba(62,79,145,.18));animation:babyFloat 1.3s ease-in-out infinite alternate;}
+  .birth-baby .birth-fallback{font-size:88px;animation:babyFloat 1.3s ease-in-out infinite alternate;}
+  @keyframes birthFade{from{opacity:0;}to{opacity:1;}}
+  @keyframes birthSparkle{to{transform:translate(-70px,-44px);}}
+  @keyframes birthGlow{from{transform:scale(1);}to{transform:scale(1.04) translateY(-8px);}}
+  @keyframes birthPop{from{opacity:0;transform:translateY(20px) scale(.96);}to{opacity:1;transform:none;}}
+  @keyframes birthBabyOut{to{opacity:0;transform:scale(1.05);}}
+  @keyframes babyCry{from{transform:translateY(0);}to{transform:translateY(-3px);}}
+  @keyframes babyFloat{from{transform:translateY(2px) scale(1);}to{transform:translateY(-7px) scale(1.035);}}
+
+  /* 성별을 고르면 아이가 반갑게 들썩인다 */
+  .gender.pick img{animation:kidWave .6s ease;}
+  @keyframes kidWave{0%{transform:scale(1.08) rotate(0);}30%{transform:scale(1.12) rotate(-6deg) translateY(-4px);}60%{transform:scale(1.1) rotate(5deg);}100%{transform:scale(1.08) rotate(0);}}
+  /* 탄생: 빛이 한 점으로 모였다가 터지며 아기가 나타난다 */
+  .birth-burst{position:fixed;left:50%;top:46%;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;z-index:1;pointer-events:none;
+    background:radial-gradient(circle,#fff 0%,rgba(255,236,170,.95) 35%,rgba(255,200,120,0) 70%);
+    animation:burst 1.1s cubic-bezier(.3,.6,.2,1) both;}
+  @keyframes burst{0%{transform:scale(6);opacity:0;}40%{transform:scale(.6);opacity:1;}55%{transform:scale(.4);opacity:1;}100%{transform:scale(28);opacity:0;}}
+  .birth-overlay.on .birth-card{animation:birthPop .58s cubic-bezier(.2,.86,.18,1.16) .5s both;}
+  @media (prefers-reduced-motion: reduce){ .birth-burst,.gender.pick img{animation:none;} }
+
+  @media(max-width:520px){
+    .dream-shell{padding:18px 12px;place-items:center;}
+    .main-card{padding:22px 16px;border-radius:25px;}
+    h1{font-size:43px;}
+    .subtitle{font-size:14px;margin-bottom:18px;}
+    .gender-row{gap:10px;}
+    .gender{min-height:158px;padding-top:10px;}
+    .gender img{height:102px;}
+    .gender .fallback{line-height:102px;font-size:62px;}
+  }
+</style>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#5B8BFF">
+<link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="./icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="제2의 인생">
+<script src="./pwa.js" defer></script>
+</head>
+<body>
+  <main class="dream-shell">
+    <section class="main-card" aria-labelledby="gameTitle">
+      <img class="app-mark" src="./icons/icon.svg" alt="" width="76" height="76">
+      <span class="badge-top">🎲 인생 시뮬레이션</span>
+      <h1 id="gameTitle">제2의 인생</h1>
+      <p class="subtitle copy-lines" id="mainCopy" aria-live="polite"></p>
+
+      <div class="field">
+        <label class="label" for="nameInput">이름</label>
+        <input type="text" id="nameInput" maxlength="10" placeholder="이름을 입력하세요" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <p class="label">성별</p>
+        <div class="gender-row" role="radiogroup" aria-label="성별 선택">
+          <button type="button" class="gender" id="gFemale" role="radio" aria-checked="false" onclick="pickGender('female')">
+            <img src="./image/user/base/child_female.png" alt="여자 아이" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <span class="fallback">👧</span>
+            <span class="gname">여자</span>
+            <span class="gsub">soft start</span>
+          </button>
+          <button type="button" class="gender" id="gMale" role="radio" aria-checked="false" onclick="pickGender('male')">
+            <img src="./image/user/base/child_male.png" alt="남자 아이" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <span class="fallback">👦</span>
+            <span class="gname">남자</span>
+            <span class="gsub">bright start</span>
+          </button>
+        </div>
+      </div>
+
+      <p class="err" id="errMsg" aria-live="polite"></p>
+
+      <div class="btn-row">
+        <button class="btn btn-how btn-resume" id="resumeBtn" hidden onclick="resumeGame()"></button>
+        <button class="btn btn-start" onclick="startGame()">👶 태어나기</button>
+        <button class="btn btn-how" onclick="toggleHow(true)">📖 게임 설명</button>
+      </div>
+
+      <footer>함께 성장할 상대도 준비되었어요</footer>
+    </section>
+    <p class="copyright">© 2026 edagim29. All rights reserved. 무단 복제·배포 금지</p>
+  </main>
+
+  <div class="overlay" id="howOverlay" onclick="if(event.target===this)toggleHow(false)">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="howTitle">
+      <h2 id="howTitle">📖 게임 설명</h2>
+      <div class="rule-grid">
+        <div class="rule"><span class="ri">🎲</span><span>주사위를 굴려 인생을 진행합니다</span></div>
+        <div class="rule"><span class="ri">🧒</span><span>탄생부터 노년기까지 시대를 거칩니다</span></div>
+        <div class="rule"><span class="ri">🤝</span><span>함께 성장할 상대가 등장합니다</span></div>
+        <div class="rule"><span class="ri">🌊</span><span>바닷가 도시 <b>새봄시</b>에서 단짝 도담, 한결 선생님, 옥순 할머니와 평생에 걸친 인연을 쌓습니다</span></div>
+        <div class="rule"><span class="ri">📰</span><span>4라운드마다 <b>새봄일보</b>의 시대 뉴스가 두 사람의 인생을 흔듭니다</span></div>
+        <div class="rule"><span class="ri">💞</span><span>연애, 결혼, 직업, 투자, 가족 이야기가 시대마다 펼쳐집니다</span></div>
+        <div class="rule"><span class="ri">🏆</span><span>여든 살, 자산·능력치·커리어·가족·재능·인연·건강 7개 부문 <b>인생 점수</b>로 승부를 가립니다</span></div>
+      </div>
+      <button class="btn btn-close" onclick="toggleHow(false)">좋아요</button>
+    </div>
+  </div>
+
+  <div class="birth-overlay" id="birthOverlay" aria-hidden="true">
+    <div class="birth-burst"></div>
+    <div class="birth-card">
+      <div class="birth-cry">응애, 응애!</div>
+      <div class="birth-baby" id="birthBaby">👶</div>
+      <div class="birth-title" id="birthTitle">제2의 인생이 시작되었어요!</div>
+      <div class="birth-sub">작은 첫 걸음이 시작됩니다</div>
+    </div>
+  </div>
+<script>
+  const BASE_AVATAR = {
+    female: { tokenFallback:"👧", faceFallback:"🙂" },
+    male:   { tokenFallback:"👦", faceFallback:"🙂" }
+  };
+
+  const AI_NAMES = {
+    female:["하나","지유","서린","민서","채원","유나","소영","수아"],
+    male:  ["도윤","서우","준호","하람","민우","지호","민재","강우"]
+  };
+
+  const AI_TRAITS = [
+    { id:"stable", name:"안정 추구형", emoji:"🛡️" },
+    { id:"challenger", name:"도전형", emoji:"🚀" },
+    { id:"romantic", name:"연애 중심형", emoji:"💞" },
+    { id:"tycoon", name:"부자 야망형", emoji:"💎" },
+    { id:"grinder", name:"성장 몰입형", emoji:"🔥" }
+  ];
+
+  const MAIN_COPY_LINES = [
+    "제2의 인생을 살아보아요!",
+    "작은 선택이 긴 인생을 만듭니다",
+    "태어나서 어른이 될 때까지, 당신의 이야기"
+  ];
+
+  function setRandomMainCopy(){
+    const host = document.getElementById("mainCopy");
+    if(!host) return;
+    const copy = MAIN_COPY_LINES[rnd(0, MAIN_COPY_LINES.length - 1)];
+    host.innerHTML = `<span class="copy-main">${copy}</span>`;
+  }
+
+  function rnd(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+  function makeStats(){
+    return {
+      money: 0,
+      intelligence: rnd(40,60),
+      charm: rnd(40,60),
+      health: rnd(45,65),
+      relationship: rnd(40,60),
+      luck: rnd(35,60)
+    };
+  }
+
+  function makePlayer(opts){
+    return {
+      id: opts.id,
+      type: opts.type,
+      name: opts.name,
+      gender: opts.gender,
+      characterId: null,
+      characterSelected: false,
+      aiTrait: opts.aiTrait || null,
+      position: 0,
+      currentRoute: null,
+      stats: makeStats(),
+      face: "normal",
+      hasPartner: false,
+      isMarried: false,
+      weddingGiftTotal: 0,
+      job: null,
+      salary: 0,
+      hasHouse: false,
+      achievements: [],
+      eventHistory: [],
+      finished: false,
+      finishOrder: null,
+      baseAvatar: BASE_AVATAR[opts.gender]
+    };
+  }
+
+  let selectedGender = null;
+
+  function pickGender(g){
+    selectedGender = g;
+    const f = document.getElementById('gFemale');
+    const m = document.getElementById('gMale');
+    f.classList.remove('sel-female','pick');
+    m.classList.remove('sel-male','pick');
+    f.setAttribute('aria-checked', g === 'female' ? 'true' : 'false');
+    m.setAttribute('aria-checked', g === 'male' ? 'true' : 'false');
+    if(g === 'female'){
+      f.classList.add('sel-female');
+      void f.offsetWidth;
+      f.classList.add('pick');
+    }else{
+      m.classList.add('sel-male');
+      void m.offsetWidth;
+      m.classList.add('pick');
+    }
+    clearErr();
+  }
+
+  function toggleHow(show){
+    document.getElementById('howOverlay').classList.toggle('on', show);
+  }
+
+  function showErr(msg){ document.getElementById('errMsg').textContent = msg; }
+  function clearErr(){ document.getElementById('errMsg').textContent = ""; }
+
+  function startGame(){
+    const name = document.getElementById('nameInput').value.trim();
+
+    if(!name){
+      showErr("이름을 입력해 주세요!");
+      document.getElementById('nameInput').focus();
+      return;
+    }
+    if(!selectedGender){
+      showErr("성별을 선택해 주세요!");
+      return;
+    }
+
+    const user = makePlayer({
+      id:"p_user",
+      type:"user",
+      name:name,
+      gender:selectedGender
+    });
+
+    const aiGender = Math.random() < 0.5 ? "female" : "male";
+    const aiName = AI_NAMES[aiGender][rnd(0, AI_NAMES[aiGender].length - 1)];
+    const aiTrait = AI_TRAITS[rnd(0, AI_TRAITS.length - 1)];
+
+    const ai = makePlayer({
+      id:"p_ai",
+      type:"ai",
+      name:aiName,
+      gender:aiGender,
+      aiTrait:aiTrait.id
+    });
+
+    const gameState = {
+      currentStage: "child",
+      globalRound: 1,
+      stageRoute: [
+        "stage_child.html",
+        "stage_elementary.html",
+        "stage_middle.html",
+        "stage_high.html",
+        "stage_youth.html",
+        "stage_adult.html",
+        "stage_senior.html",
+        "result.html"
+      ]
+    };
+
+    try{
+      localStorage.setItem("secondLife_players", JSON.stringify([user, ai]));
+      localStorage.setItem("secondLife_gameState", JSON.stringify(gameState));
+      localStorage.removeItem("secondLife_result");
+    }catch(e){
+      showErr("저장에 실패했어요. 브라우저 설정을 확인해 주세요.");
+      return;
+    }
+
+    showBirthTransition(name, selectedGender);
+  }
+
+  function showBirthTransition(name, gender){
+    const card = document.querySelector('.main-card');
+    const overlay = document.getElementById('birthOverlay');
+    const title = document.getElementById('birthTitle');
+    const baby = document.getElementById('birthBaby');
+    const imgSrc = gender === 'female' ? './image/user/base/child_female.png' : './image/user/base/child_male.png';
+    const fallback = gender === 'female' ? '👧' : '👦';
+    title.textContent = `${name}이가 태어났어요!`;
+    baby.innerHTML = `<img src="${imgSrc}" alt="태어난 아이" onerror="this.replaceWith(document.createTextNode('${fallback}'))">`;
+    overlay.setAttribute('aria-hidden', 'false');
+    overlay.classList.add('on');
+    card.style.transition = "transform .42s ease, opacity .42s ease";
+    card.style.transform = "scale(.96) translateY(10px)";
+    card.style.opacity = "0";
+    setTimeout(function(){ overlay.querySelector('.birth-card').style.animation = 'birthBabyOut .34s ease forwards'; }, 2200);
+    setTimeout(function(){ window.location.href = "stage_child.html"; }, 2600);
+  }
+
+  setRandomMainCopy();
+
+  document.getElementById('nameInput').addEventListener('keydown', function(e){
+    if(e.key === 'Enter') startGame();
+  });
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') toggleHow(false);
+  });
+
+/* ── 이어하기: 시대가 끝날 때마다 저장된 인생이 있으면, 끝내지 못한 시대부터 다시 연다 ── */
+const RESUME_ORDER=[["child","stage_child.html","유년기"],["elementary","stage_elementary.html","초등학생"],["middle","stage_middle.html","중학생"],["high","stage_high.html","고등학생"],["youth","stage_youth.html","청년기"],["adult","stage_adult.html","성인기"],["senior","stage_senior.html","노년기"]];
+function savedLife(){
+  try{
+    const ps=JSON.parse(localStorage.getItem("secondLife_players"));
+    if(!ps||ps.length<2||!ps[0].name) return null;
+    const done=ps[0].stageDone||{};
+    const next=RESUME_ORDER.find(s=>!done[s[0]]);
+    if(!next||!done.child) return null;   // 첫 시대도 못 끝냈거나, 이미 여든까지 산 인생
+    return {name:ps[0].name, file:next[1], label:next[2]};
+  }catch(e){ return null; }
+}
+function resumeGame(){ const s=savedLife(); if(s) location.href=s.file; }
+(function(){
+  const s=savedLife(), b=document.getElementById("resumeBtn");
+  if(s&&b){ b.innerHTML="▶ "+s.name+"의 인생 이어하기<small>"+s.label+"부터</small>"; b.hidden=false; }
+})();
+</script>
+</body>
+</html>
+
+
+
+
+
+

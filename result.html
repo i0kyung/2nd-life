@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>제2의 인생 · 결과</title>
+<style>
+:root{
+  --main:#4F7CFF; --main-weak:rgba(79,124,255,.12);
+  --rival:#8A94B8; --pos:#1F9B78; --neg:#E0476B; --warn:#C98A00; --romance:#FF6FB1;
+  --gold:#E9A100;
+  --ink:#1B2340; --ink-2:#4A5372; --muted:#858DAC;
+  --line:rgba(27,35,64,.10); --card:#FFFFFF; --sunk:#F2F4F9; --bg:#EEF1F7;
+  --r:16px; --shadow:0 6px 20px rgba(27,35,64,.09);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;}
+body{
+  font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  color:var(--ink); background:var(--bg); padding:0 0 60px;
+}
+body::before{ content:"";position:fixed;inset:0;z-index:-1;
+  background:url("./image/bg/senior.png") center/cover no-repeat; opacity:.28; }
+body::after{ content:"";position:fixed;inset:0;z-index:-1;
+  background:linear-gradient(180deg, rgba(238,241,247,.86), rgba(238,241,247,.96)); }
+.wrap{ max-width:860px; margin:0 auto; padding:34px 18px 0; }
+
+.head{ text-align:center; margin-bottom:26px; opacity:0; animation:fadeUp .6s ease .1s forwards; }
+.head .k{ display:inline-block; font-size:12px; font-weight:900; color:#fff;
+  background:linear-gradient(90deg,var(--main),var(--romance)); padding:6px 14px; border-radius:99px; }
+.head h1{ font-size:30px; font-weight:900; letter-spacing:-.5px; margin-top:12px; }
+.head p{ font-size:14px; font-weight:700; color:var(--ink-2); margin-top:8px; line-height:1.6; }
+
+/* 승패 배너 */
+.verdict{ background:var(--card); border-radius:var(--r); box-shadow:var(--shadow);
+  padding:22px; text-align:center; margin-bottom:18px; border-top:4px solid var(--main);
+  opacity:0; animation:fadeUp .6s ease .25s forwards; }
+.verdict .big{ font-size:22px; font-weight:900; }
+.verdict .sub{ font-size:13px; font-weight:700; color:var(--muted); margin-top:6px; }
+
+/* 두 사람 자산 비교 */
+.duo{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px; }
+@media(max-width:560px){ .duo{ grid-template-columns:1fr; } }
+.person{ background:var(--card); border-radius:var(--r); box-shadow:var(--shadow); padding:18px;
+  border-top:4px solid var(--rival); opacity:0; animation:fadeUp .6s ease forwards; }
+.person.me{ border-top-color:var(--main); }
+.person.win{ box-shadow:0 0 0 2px var(--gold), var(--shadow); }
+.person:nth-child(1){ animation-delay:.4s; } .person:nth-child(2){ animation-delay:.5s; }
+.p-top{ display:flex; align-items:center; gap:12px; }
+.p-face{ width:70px; height:70px; border-radius:14px; background:var(--sunk); overflow:hidden;
+  display:flex; align-items:flex-end; justify-content:center; flex:0 0 auto; }
+.p-face img{ width:100%; height:100%; object-fit:contain; }
+.p-name{ font-size:16px; font-weight:900; }
+.p-title{ font-size:12px; font-weight:800; color:var(--ink-2); margin-top:2px; line-height:1.4; }
+.p-asset{ font-size:30px; font-weight:900; margin-top:14px; letter-spacing:-1px; }
+.p-asset small{ font-size:13px; font-weight:800; color:var(--muted); }
+.p-facts{ margin-top:12px; display:flex; flex-direction:column; gap:6px; }
+.fact{ font-size:12px; font-weight:800; color:var(--ink-2); display:flex; gap:7px; }
+.fact b{ color:var(--ink); }
+.crown{ font-size:15px; }
+
+/* 인과 되감기 */
+.story{ background:var(--card); border-radius:var(--r); box-shadow:var(--shadow); padding:22px 20px;
+  margin-bottom:18px; opacity:0; animation:fadeUp .6s ease .6s forwards; }
+.story h2{ font-size:16px; font-weight:900; margin-bottom:4px; }
+.story .lead{ font-size:12.5px; font-weight:700; color:var(--muted); margin-bottom:14px; }
+.chain{ display:flex; flex-direction:column; gap:10px; }
+.link{ display:flex; gap:12px; align-items:flex-start;
+  padding:11px 13px; background:var(--sunk); border-radius:12px; border-left:3px solid var(--main); }
+.link .ic{ font-size:18px; line-height:1.3; flex:0 0 auto; }
+.link .tx{ font-size:13px; font-weight:700; color:var(--ink-2); line-height:1.5; }
+.link .tx b{ color:var(--ink); font-weight:900; }
+.link.pos{ border-left-color:var(--pos); }
+.link.neg{ border-left-color:var(--neg); }
+.link.gold{ border-left-color:var(--gold); }
+
+/* 챕터 타임라인 */
+.chapters{ background:var(--card); border-radius:var(--r); box-shadow:var(--shadow); padding:20px;
+  margin-bottom:20px; opacity:0; animation:fadeUp .6s ease .7s forwards; }
+.chapters h2{ font-size:16px; font-weight:900; margin-bottom:14px; }
+.ch{ display:flex; gap:12px; align-items:center; padding:9px 0; border-bottom:1px solid var(--line); }
+.ch:last-child{ border-bottom:0; }
+.ch .era{ font-size:12px; font-weight:900; color:var(--main); width:52px; flex:0 0 auto; }
+.ch .t{ font-size:13px; font-weight:800; color:var(--ink); flex:1; }
+.ch .m{ font-size:12px; font-weight:800; color:var(--muted); }
+
+.actions{ text-align:center; opacity:0; animation:fadeUp .6s ease .85s forwards; }
+.btn{ border:0; border-radius:14px; color:#fff; font:900 15px inherit; cursor:pointer;
+  padding:15px 30px; background:linear-gradient(105deg,var(--main),var(--romance)); }
+.btn:active{ transform:translateY(2px); }
+.btn.ghost{ background:var(--sunk); color:var(--ink-2); margin-left:8px; }
+
+/* ── 최종 승부: 인생 점수 정산 쇼 ── */
+.sd{ position:relative; background:linear-gradient(160deg,#1E2550,#2C2468 60%,#3A2563); color:#fff;
+  border-radius:22px; padding:22px 18px 18px; margin-bottom:18px; overflow:hidden;
+  box-shadow:0 18px 44px rgba(27,35,64,.28); animation:fadeUp .6s ease .15s both; }
+.sd::before{ content:""; position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(circle at 20% 0%,rgba(79,124,255,.35),transparent 45%),radial-gradient(circle at 80% 0%,rgba(255,111,177,.3),transparent 45%); }
+.sd > *{ position:relative; }
+.sd-top{ display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:10px; }
+.sd-p{ display:flex; flex-direction:column; align-items:center; gap:6px; transition:transform .35s, opacity .35s, filter .35s; }
+.sd-p b{ font-size:14px; font-weight:900; }
+.sd-face{ position:relative; width:88px; height:88px; border-radius:50%; background:rgba(255,255,255,.12);
+  display:flex; align-items:flex-end; justify-content:center; overflow:visible; box-shadow:0 0 0 3px rgba(255,255,255,.18); }
+.sd-face img{ height:100%; width:100%; object-fit:cover; object-position:50% 8%; border-radius:50%; }
+.sd-p.me .sd-face{ box-shadow:0 0 0 3px #4F7CFF; } .sd-p.ai .sd-face{ box-shadow:0 0 0 3px #FF6FB1; }
+.sd-total{ font-size:34px; font-weight:900; letter-spacing:-1px; font-variant-numeric:tabular-nums; line-height:1; }
+.sd-total small{ font-size:13px; opacity:.7; margin-left:2px; }
+.sd-p.bump .sd-total{ animation:sdBump .45s cubic-bezier(.2,1.6,.4,1); }
+@keyframes sdBump{ 40%{ transform:scale(1.18); color:#FFD86F; } }
+.sd-vs{ text-align:center; } .sd-vs span{ display:block; font-size:26px; font-weight:900; font-style:italic; color:#FFD86F; text-shadow:0 0 18px rgba(255,216,111,.6); }
+.sd-vs small{ font-size:11px; font-weight:800; opacity:.75; white-space:nowrap; }
+.sd-tug{ position:relative; display:flex; height:12px; border-radius:99px; overflow:visible; margin:16px 6px 14px; background:rgba(255,255,255,.12); }
+.sd-tug i{ display:block; height:100%; transition:width .6s cubic-bezier(.3,.8,.3,1); }
+.sd-tug i.u{ background:linear-gradient(90deg,#3B63E8,#7FA2FF); border-radius:99px 0 0 99px; width:50%; }
+.sd-tug i.a{ background:linear-gradient(90deg,#FF9BCB,#FF5FA8); border-radius:0 99px 99px 0; width:50%; }
+.sd-tug .knot{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:20px; transition:left .6s cubic-bezier(.3,.8,.3,1); }
+.sd-cats{ display:flex; flex-direction:column; gap:7px; }
+.sd-row{ display:grid; grid-template-columns:1fr 92px 1fr; align-items:center; gap:8px; background:rgba(255,255,255,.07);
+  border-radius:12px; padding:8px 10px; opacity:0; transform:translateY(10px); transition:opacity .35s, transform .35s; }
+.sd-row.in{ opacity:1; transform:none; }
+.sd-cat{ text-align:center; font-size:12.5px; font-weight:900; } .sd-cat span{ display:block; font-size:20px; }
+.sd-side{ display:grid; align-items:center; gap:7px; font-size:11.5px; font-weight:800; }
+.sd-side.me{ grid-template-columns:1fr 70px auto; } .sd-side.ai{ grid-template-columns:auto 70px 1fr; }
+.sd-side .raw{ opacity:.78; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sd-side.me .raw{ text-align:right; }
+.sd-side .sd-bar{ height:7px; border-radius:99px; background:rgba(255,255,255,.12); overflow:hidden; }
+.sd-side.me .sd-bar{ direction:rtl; }
+.sd-side .sd-bar i{ display:block; height:100%; width:0; border-radius:99px; transition:width .7s cubic-bezier(.3,.8,.3,1); }
+.sd-side.me .sd-bar i{ background:#7FA2FF; } .sd-side.ai .sd-bar i{ background:#FF8CC0; }
+.sd-row.go .sd-bar i{ width:var(--w); }
+.sd-side .pts{ font-size:15px; font-weight:900; min-width:52px; font-variant-numeric:tabular-nums; }
+.sd-side.me .pts{ text-align:right; }
+.sd-side.win .pts{ color:#FFD86F; text-shadow:0 0 12px rgba(255,216,111,.7); }
+.sd-side.win .pts::after{ content:" ✓"; font-size:11px; }
+.sd.suspense .sd-total{ animation:sdPulse .32s ease-in-out infinite alternate; }
+.sd.suspense .sd-vs span{ animation:sdDrum .16s linear infinite; }
+@keyframes sdPulse{ to{ transform:scale(1.08); } }
+@keyframes sdDrum{ 50%{ transform:translateY(-2px) rotate(-4deg); } }
+.sd-p.champ{ transform:scale(1.1); } .sd-p.champ .sd-face{ box-shadow:0 0 0 4px #FFD86F, 0 0 34px rgba(255,216,111,.8); }
+.sd-p.lose{ opacity:.55; filter:grayscale(.6); transform:scale(.94); }
+.sd-final{ text-align:center; margin-top:14px; opacity:0; transform:scale(.9); transition:opacity .45s, transform .45s cubic-bezier(.2,1.5,.4,1); }
+.sd-final.on{ opacity:1; transform:none; }
+.sd-final .big{ font-size:24px; font-weight:900; color:#FFD86F; }
+.sd-final .sub{ font-size:12.5px; font-weight:800; opacity:.85; margin-top:6px; }
+.sd-final .note{ font-size:13px; font-weight:700; margin-top:8px; opacity:.92; line-height:1.55; }
+.sd-final .note b{ color:#FFD86F; }
+.sd-skip{ position:absolute; top:12px; right:12px; border:0; border-radius:99px; padding:6px 12px; font:800 11.5px inherit;
+  color:#fff; background:rgba(255,255,255,.14); cursor:pointer; }
+.after{ display:none; } .after.on{ display:block; animation:fadeUp .6s ease both; }
+@media(max-width:560px){ .sd-row{ grid-template-columns:1fr 64px 1fr; } .sd-side .raw{ display:none; } .sd-side.me,.sd-side.ai{ grid-template-columns:1fr auto; } .sd-side.ai{ grid-template-columns:auto 1fr; } .sd-total{ font-size:26px; } }
+
+/* 자산 곡선 */
+.growth{ background:var(--card); border-radius:var(--r); box-shadow:var(--shadow); padding:20px;
+  margin-bottom:18px; opacity:0; animation:fadeUp .6s ease .55s forwards; }
+.growth h2{ font-size:16px; font-weight:900; margin-bottom:8px; }
+.legend{ display:flex; gap:14px; font-size:12px; font-weight:800; color:var(--ink-2); margin-bottom:12px; }
+.legend i{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px; }
+.legend i.me, .bar.me{ background:var(--main); }
+.legend i.ai, .bar.ai{ background:var(--rival); }
+.g-row{ display:flex; align-items:center; gap:12px; padding:7px 0; }
+.g-row .era{ font-size:12px; font-weight:900; color:var(--main); width:40px; flex:0 0 auto; }
+.bars{ flex:1; display:flex; flex-direction:column; gap:5px; }
+.bar{ height:18px; border-radius:6px; width:0; position:relative; animation:barGrow .9s cubic-bezier(.2,.8,.2,1) var(--d) forwards; }
+.bar b{ position:absolute; left:calc(100% + 6px); top:50%; transform:translateY(-50%); font-size:11.5px; font-weight:900; color:var(--ink-2); white-space:nowrap; }
+@keyframes barGrow{ to{ width:var(--w); } }
+/* 왕관 · 꽃가루 */
+.p-face{ position:relative; overflow:visible; }
+.crown-drop{ position:absolute; left:50%; top:-26px; font-size:24px; transform:translateX(-50%);
+  animation:crownDrop .8s cubic-bezier(.3,1.6,.5,1) both; filter:drop-shadow(0 4px 6px rgba(0,0,0,.2)); }
+@keyframes crownDrop{ 0%{ transform:translate(-50%,-120px) rotate(-30deg); opacity:0; } 100%{ transform:translate(-50%,0) rotate(-8deg); opacity:1; } }
+.confetti-host{ position:fixed; inset:0; pointer-events:none; z-index:50; overflow:hidden; }
+.confetti-host span{ position:absolute; top:-30px; animation:confFall 2.2s ease-in forwards; }
+@keyframes confFall{ to{ transform:translateY(105vh) rotate(340deg); opacity:.2; } }
+@media (prefers-reduced-motion: reduce){ .bar{ animation:none; width:var(--w); } }
+@keyframes fadeUp{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:translateY(0); } }
+</style>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#5B8BFF">
+<link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="./icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="제2의 인생">
+<script src="./pwa.js" defer></script>
+</head>
+<body>
+<div class="wrap" id="wrap">
+  <div class="head">
+    <span class="k">🌇 인생 결산</span>
+    <h1>제2의 인생, 그 끝에서</h1>
+    <p id="headSub">여든 해를 살아냈어요. 어린 시절의 선택이 지금 통장에 찍혔습니다.</p>
+  </div>
+  <div id="body"></div>
+</div>
+
+<script>
+/* ── 저장 로드 ── */
+function loadPlayers(){ try{ return JSON.parse(localStorage.getItem("secondLife_players")); }catch(e){ return null; } }
+
+/* ── 재능 판정 (스테이지와 동일 로직 최소 복제) ── */
+const TALENT_CATEGORIES = {
+  art:   { name:"예술", emoji:"🎨", flags:["talentArt","likesDrawing","diary","artClub","smallAward"], childHint:"그림을 그리며" },
+  stage: { name:"무대", emoji:"🎤", flags:["talentSong","musicClub","talentStage","goodAtPresentation","confident"], childHint:"노래하고 발표하며" },
+  study: { name:"학업", emoji:"📚", flags:["readingHabit","homeworkHabit","studyRoutine","examFocus","scienceClub","diligent"], childHint:"책을 파고들며" },
+  social:{ name:"사교", emoji:"🤝", flags:["manyFriends","goodFriend","teacherPraise","classPresident"], childHint:"친구들과 어울리며" },
+  body:  { name:"체력", emoji:"🏃", flags:["runningEnergy","luckyLunch"], childHint:"운동장을 뛰며" }
+};
+const TALENT_STAR=["","★","★★","★★★"];
+function talentScore(p,k){ const c=TALENT_CATEGORIES[k],f=p.eventFlags||{}; return c.flags.filter(x=>f[x]).length/c.flags.length; }
+function talentLevel(p,k){ const s=talentScore(p,k), c=flagCount(p,k); const spread=Object.keys(TALENT_CATEGORIES).some(o=>o!==k&&talentScore(p,o)>=0.6); return (s>=0.75&&c>=3&&!spread)?3:(s>=0.4&&c>=2)?2:c>=1?1:0; }
+function topTalent(p){ let b=null,bv=0; for(const k in TALENT_CATEGORIES){ const s=talentScore(p,k); if(s>bv){bv=s;b=k;} } return bv>0?b:null; }
+function flagCount(p,k){ const c=TALENT_CATEGORIES[k],f=p.eventFlags||{}; return c.flags.filter(x=>f[x]).length; }
+
+/* 고른 캐릭터의 노년 모습 (예전엔 누구든 1번 캐릭터로 고정돼 있었다) */
+function avatarOf(p){
+  const f=p.gender==="female";
+  const m=/^(female|male)0?(\d)$/.exec(p.characterId||"");
+  const folder = m ? `${m[1]}/${m[2]}` : (f?"female/1":"male/1");
+  return { img:`./image/user/${folder}/senior.png`, fb:(f?"👵":"👴") };
+}
+function won(k){ return `<span style="color:var(--pos)">${k}</span>`; }
+
+/* ── 인과 되감기: 이 사람이 살아온 이야기를 원인→결과로 엮는다 ── */
+function buildChain(p){
+  const links=[]; const k=topTalent(p);
+  // ① 재능
+  if(k){
+    const lv=talentLevel(p,k), cat=TALENT_CATEGORIES[k], cnt=flagCount(p,k);
+    if(lv>=2){
+      links.push({cls:"gold", ic:cat.emoji, tx:`어린 시절 <b>${cat.childHint}</b> 보낸 시간이 <b>${cat.name} ${TALENT_STAR[lv]}</b>이 되었고, 평생 <b>재능 수입 ${p.talentIncomeTotal||0}</b>으로 돌아왔어요.`});
+    }else if(lv===1){
+      links.push({cls:"", ic:cat.emoji, tx:`<b>${cat.name}</b>에 취미 정도의 재능이 있었지만, 끝까지 키우진 못했어요.`});
+    }
+  }else{
+    links.push({cls:"", ic:"🌫️", tx:`뚜렷한 재능을 키우지 못한 채, 여러 길을 조금씩 걸었어요.`});
+  }
+  // ② 결혼·자녀
+  const kids=(p.children||[]).filter(c=>c.adult).length;
+  if(kids){
+    const inv=(p.children||[]).reduce((s,c)=>s+(c.invest||0),0)/(p.children.length||1);
+    if((p.allowanceReceived||0)>=200){
+      links.push({cls:"pos", ic:"👨‍👩‍👧", tx:`정성껏 키운 <b>자녀 ${kids}명</b>이 노년에 <b>용돈 ${p.allowanceReceived||0}</b>으로 갚아왔어요. 양육에 쓴 돈이 그대로 돌아온 거예요.`});
+    }else{
+      links.push({cls:"", ic:"👶", tx:`<b>자녀 ${kids}명</b>을 두었지만, 형편껏 키운 만큼 노년의 용돈도 소박했어요.`});
+    }
+  }else if(p.isMarried){
+    links.push({cls:"", ic:"💍", tx:`<b>${p.spouseName||"배우자"}</b>와 둘이서, 자녀 없이 담백한 삶을 꾸렸어요.`});
+  }else{
+    links.push({cls:"", ic:"🕊️", tx:`가정을 꾸리는 대신 <b>홀로</b>의 삶을 택했어요. 자유로웠지만 노년은 조용했어요.`});
+  }
+  // ③ 새봄시의 인연
+  const b=p.bonds||{}, n=p.bondNotes||{}, f=p.eventFlags||{};
+  if(f.lifelongFriend) links.push({cls:"gold", ic:"🧓", tx:`강변공원 모래밭에서 만난 <b>도담</b>과는 여든까지 함께 걷는 <b>평생 친구</b>가 됐어요.`});
+  else if((b.dodam||0)>=6) links.push({cls:"pos", ic:"🧑", tx:`<b>도담</b>과의 우정은 긴 세월에도 끊기지 않았어요. ${n.dodam?`(${n.dodam})`:""}`});
+  else if((b.dodam||0)<0) links.push({cls:"neg", ic:"🧑", tx:`어릴 적 단짝 <b>도담</b>과는 어느새 연락이 끊겼어요.`});
+  if(f.grannyShop) links.push({cls:"gold", ic:"🏪", tx:`어릴 적 단골이던 <b>옥순상회</b>를 물려받아 골목을 지켰어요.`});
+  else if((b.granny||0)>=5) links.push({cls:"pos", ic:"👵", tx:`<b>옥순 할머니</b>는 마지막까지 "우리 단골 1호"를 기억하셨어요.`});
+  if(f.memoir) links.push({cls:"gold", ic:"📖", tx:`<b>한결 선생님</b>의 마지막 편지를 받고 자서전을 썼어요. 첫 장 제목은 '빨간 글씨 답장'.`});
+  else if((b.teacher||0)>=5) links.push({cls:"pos", ic:"👨‍🏫", tx:`초등학교 일기에 답장해 주던 <b>한결 선생님</b>은 평생의 스승이 됐어요.`});
+  // ④ 건강
+  const h=(p.stats&&p.stats.health)||50;
+  if(h>=65) links.push({cls:"pos", ic:"💪", tx:`몸을 꾸준히 챙긴 덕에 <b>정정한 노년</b>을 보냈어요. 의료비가 거의 들지 않았죠.`});
+  else if(h<40) links.push({cls:"neg", ic:"🩺", tx:`젊은 날 몸을 아낀 대가로, 노년에 <b>의료비 청구서</b>가 날아왔어요.`});
+  // ④ 최종 성향
+  if((p.money||0)>=3000) links.push({cls:"gold", ic:"🏦", tx:`모든 선택이 쌓여 <b>여유로운 황혼</b>에 닿았어요.`});
+  else if((p.money||0)<300) links.push({cls:"neg", ic:"📉", tx:`고비마다 쓸 일이 많아, 통장은 끝내 넉넉해지지 못했어요.`});
+  return links;
+}
+
+const ERA_NAME={ child:"유아", elementary:"초등", middle:"중등", high:"고등", youth:"청년", adult:"성인", senior:"노년" };
+
+function render(){
+  const players=loadPlayers();
+  if(!players||players.length<2){ document.getElementById("body").innerHTML=`<div class="verdict"><div class="big">저장된 인생이 없어요</div><div class="sub">처음부터 시작해 주세요.</div><div class="actions" style="margin-top:16px;opacity:1;animation:none"><button class="btn" onclick="restart()">처음으로</button></div></div>`; return; }
+  const u=players.find(p=>p.type==="user")||players[0];
+  const a=players.find(p=>p.type==="ai")||players[1];
+  // 승패는 자산 하나가 아니라 인생 점수 7개 부문의 합으로 가린다
+  const su=scoreCard(u), sa=scoreCard(a);
+  const tu=su.reduce((s,c)=>s+c.pts,0), ta=sa.reduce((s,c)=>s+c.pts,0);
+  const iWon=tu>=ta; const draw=tu===ta;
+  try{ localStorage.setItem("secondLife_result", JSON.stringify({user:tu, ai:ta, winner:draw?"draw":iWon?"user":"ai"})); }catch(e){}
+  const verdict="";
+
+  // 두 사람
+  function personCard(p, me){
+    const av=avatarOf(p); const k=topTalent(p);
+    const kids=(p.children||[]).filter(c=>c.adult).length;
+    const win=(me&&iWon)||(!me&&!iWon);
+    return `<div class="person ${me?'me':''} ${win?'win':''}">
+      <div class="p-top">
+        <div class="p-face"><img src="${av.img}" onerror="this.replaceWith(document.createTextNode('${av.fb}'))"></div>
+        <div><div class="p-name">${win?'<span class="crown">👑</span> ':''}${me?'🙂':'🌸'} ${p.name}</div>
+        <div class="p-title">${p.seniorSummaryLine||p.adultSummaryLine||"한 생을 살아낸 사람"}</div></div>
+      </div>
+      <div class="p-asset"><span class="count" data-to="${p.money||0}">0</span><small> 최종 자산</small></div>
+      <div class="p-facts">
+        <div class="fact">🎓 <b>${k?TALENT_CATEGORIES[k].emoji+" "+TALENT_CATEGORIES[k].name+" "+TALENT_STAR[talentLevel(p,k)]:"재능 없음"}</b></div>
+        <div class="fact">💍 <b>${p.isMarried?(p.spouseName||"결혼"):"홀로"}</b>${kids?` · 자녀 ${kids}명`:""}</div>
+        <div class="fact">🧧 자녀 용돈 <b>${p.allowanceReceived||0}</b> · 재능 수입 <b>${p.talentIncomeTotal||0}</b></div>
+        <div class="fact">❤️ 건강 <b>${(p.stats&&p.stats.health)||0}</b> · 관계 <b>${(p.stats&&p.stats.relationship)||0}</b></div>
+      </div>
+    </div>`;
+  }
+  const duo=`<div class="duo">${personCard(u,true)}${personCard(a,false)}</div>`;
+
+  // 인과
+  const chain=buildChain(u);
+  const story=`<div class="story">
+    <h2>당신의 인생은 이렇게 이어졌어요</h2>
+    <div class="lead">모든 결과에는 어린 시절의 원인이 있었어요.</div>
+    <div class="chain">${chain.map(l=>`<div class="link ${l.cls}"><span class="ic">${l.ic}</span><span class="tx">${l.tx}</span></div>`).join("")}</div>
+  </div>`;
+
+  // 챕터
+  const chs=(u.chapterSummaries||[]);
+  const chapters=chs.length?`<div class="chapters">
+    <h2>당신이 걸어온 일곱 시대</h2>
+    ${chs.map(c=>`<div class="ch"><span class="era">${ERA_NAME[c.stage]||c.stage}</span><span class="t">${c.title||"—"}</span><span class="m">${typeof c.money==="number"?"자산 "+c.money:""}</span></div>`).join("")}
+  </div>`:"";
+
+  // 시대별 자산 곡선: 나 vs 라이벌, 막대가 차례로 자란다
+  const ERAS=["youth","adult","senior"];
+  const moneyAt=(p,k)=>{ if(k==="senior") return p.money||0;   // 노년은 마지막 정산까지 반영된 최종 자산
+    const c=(p.chapterSummaries||[]).find(s=>s.stage===k); return c&&typeof c.money==="number"?c.money:null; };
+  const rows=ERAS.map(k=>({k, u:moneyAt(u,k), a:moneyAt(a,k)})).filter(r=>r.u!==null||r.a!==null);
+  const top=Math.max(1,...rows.map(r=>Math.max(r.u||0,r.a||0)));
+  const growth=rows.length?`<div class="growth">
+    <h2>자산이 쌓여 온 길</h2>
+    <div class="legend"><span><i class="me"></i>${u.name}</span><span><i class="ai"></i>${a.name}</span></div>
+    ${rows.map((r,i)=>`<div class="g-row"><span class="era">${ERA_NAME[r.k]}</span>
+      <div class="bars">
+        <div class="bar me" style="--w:${Math.max(2,(Math.max(0,r.u||0))/top*100)}%;--d:${0.9+i*0.25}s"><b>${r.u??"—"}</b></div>
+        <div class="bar ai" style="--w:${Math.max(2,(Math.max(0,r.a||0))/top*100)}%;--d:${1.0+i*0.25}s"><b>${r.a??"—"}</b></div>
+      </div></div>`).join("")}
+  </div>`:"";
+
+  const actions=`<div class="actions">
+    <button class="btn" onclick="restart()">🌱 새 인생 시작하기</button>
+    <button class="btn ghost" onclick="location.href='index.html'">처음 화면</button>
+  </div>`;
+
+  document.getElementById("body").innerHTML=showdownHTML(u,a)+`<div class="after" id="after">${duo+growth+story+chapters}</div>`+`<div class="after" id="afterActions">${actions}</div>`;
+  runShowdown(u,a,su,sa,tu,ta,()=>{
+    document.getElementById("headSub").textContent = draw ? "놀랍게도, 두 인생의 무게가 똑같았어요."
+      : iWon ? "긴 여정 끝에, 당신은 스스로의 선택으로 여기에 닿았어요."
+      : "점수로는 졌을지 몰라도, 당신만의 인생을 살아냈어요.";
+    document.querySelectorAll(".after").forEach(el=>el.classList.add("on"));
+    countUp();
+  });
+}
+
+/* ============================================================
+   인생 점수 — 7개 부문. 한 부문이 압도하지 않도록 각 부문 최대치를 비슷하게 맞췄다.
+   ============================================================ */
+const EDU_PTS={elite:60,metro:45,local:30,college:20,art:35,retry:10,work:15};
+const EDU_NAME={elite:"S대",metro:"인서울",local:"지방대",college:"전문대",art:"예술 실기",retry:"재수",work:"바로 취업"};
+const BOND_NAME={dodam:"도담",teacher:"한결 선생님",granny:"옥순 할머니"};
+function scoreCard(p){
+  const st=p.stats||{}; const sum=["intelligence","charm","health","relationship","luck"].reduce((s,k)=>s+(st[k]||0),0);
+  const kids=(p.children||[]).length, allow=p.allowanceReceived||0;
+  const k=topTalent(p), lv=k?talentLevel(p,k):0;
+  const bonds=p.bonds||{}; const bondPos=Object.values(bonds).reduce((s,v)=>s+Math.max(0,v),0);
+  const stories=(p.worldLog||[]).filter(x=>!String(x).startsWith("news:")).length;
+  const bestBond=Object.keys(bonds).sort((x,y)=>(bonds[y]||0)-(bonds[x]||0))[0];
+  const salary=(p.job&&p.job.baseSalary)||0;
+  return [
+    {key:"money",  ico:"💰", name:"자산",   raw:(p.money||0).toLocaleString("ko-KR"),
+      pts:Math.round(Math.max(0,p.money||0)/40)},
+    {key:"stat",   ico:"🧠", name:"능력치", raw:`평균 ${Math.round(sum/5)}`,
+      pts:Math.round(sum/2.5)},
+    {key:"career", ico:"💼", name:"커리어", raw:`${p.jobName||(p.job&&p.job.name)||"무직"} · ${EDU_NAME[p.education]||"—"}`,
+      pts:Math.round(salary*1.5 + (EDU_PTS[p.education]||0) + (p.careerLevel||0)*8)},
+    {key:"family", ico:"👨‍👩‍👧", name:"가족",  raw:p.isMarried?`결혼 · 자녀 ${kids} · 용돈 ${allow}`:(kids?`자녀 ${kids}`:"홀로"),
+      pts:(p.isMarried?60:0) + kids*35 + Math.round(allow/8)},
+    {key:"talent", ico:"🎨", name:"재능",   raw:k?`${TALENT_CATEGORIES[k].name} ${TALENT_STAR[lv]}`:"없음",
+      pts:lv*45 + Math.round((p.talentIncomeTotal||0)/60)},
+    {key:"bond",   ico:"🤝", name:"인연",   raw:bondPos?`${BOND_NAME[bestBond]||"인연"} 💛${Math.max(0,bonds[bestBond]||0)} · 이야기 ${stories}`:`이야기 ${stories}`,
+      pts:bondPos*4 + ((p.eventFlags||{}).lifelongFriend?40:0) + stories*4},
+    {key:"health", ico:"❤️", name:"건강",   raw:`건강 ${st.health||0}`,
+      pts:Math.round((st.health||0)*1.2)}
+  ];
+}
+
+function showdownHTML(u,a){
+  const au=avatarOf(u), aa=avatarOf(a);
+  return `<section class="sd" id="sd">
+    <div class="sd-top">
+      <div class="sd-p me" id="sdU"><div class="sd-face"><img src="${au.img}" onerror="this.replaceWith(document.createTextNode('${au.fb}'))"></div><b>🙂 ${u.name}</b><div class="sd-total"><span id="tU">0</span><small>점</small></div></div>
+      <div class="sd-vs"><span>VS</span><small id="sdStep">인생 점수 계산 중</small></div>
+      <div class="sd-p ai" id="sdA"><div class="sd-face"><img src="${aa.img}" onerror="this.replaceWith(document.createTextNode('${aa.fb}'))"></div><b>🌸 ${a.name}</b><div class="sd-total"><span id="tA">0</span><small>점</small></div></div>
+    </div>
+    <div class="sd-tug"><i class="u" id="tugU"></i><i class="a" id="tugA"></i><span class="knot" id="knot">🪢</span></div>
+    <div class="sd-cats" id="cats"></div>
+    <div class="sd-final" id="sdFinal"></div>
+    <button class="sd-skip" id="sdSkip" onclick="SD.skip()">건너뛰기 ⏭</button>
+  </section>`;
+}
+
+/* 숫자를 from→to로 굴린다 */
+function tween(el, from, to, dur){
+  return new Promise(res=>{
+    if(REDUCED||SD.fast){ el.textContent=to.toLocaleString("ko-KR"); res(); return; }
+    const t0=performance.now();
+    (function f(t){ const k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,3);
+      el.textContent=Math.round(from+(to-from)*e).toLocaleString("ko-KR");
+      if(k<1) requestAnimationFrame(f); else res(); })(t0);
+  });
+}
+const SD={ fast:false, skip(){ SD.fast=true; const b=document.getElementById("sdSkip"); if(b) b.style.display="none"; } };
+const sleep=(ms)=>new Promise(r=>setTimeout(r, (REDUCED||SD.fast)?0:ms));
+
+async function runShowdown(u,a,su,sa,tu,ta,done){
+  const cats=document.getElementById("cats"), step=document.getElementById("sdStep");
+  const tU=document.getElementById("tU"), tA=document.getElementById("tA");
+  let cu=0, ca=0;
+  const tug=()=>{ const t=Math.max(1,cu+ca); const pu=cu/t*100;
+    document.getElementById("tugU").style.width=pu+"%"; document.getElementById("tugA").style.width=(100-pu)+"%";
+    document.getElementById("knot").style.left=pu+"%"; };
+  tug();
+  await sleep(700);
+  for(let i=0;i<su.length;i++){
+    const U=su[i], A=sa[i]; const max=Math.max(1,U.pts,A.pts);
+    step.textContent=`${i+1} / ${su.length} · ${U.name}`;
+    const row=document.createElement("div"); row.className="sd-row";
+    row.innerHTML=`<div class="sd-side me"><span class="raw">${U.raw}</span><div class="sd-bar"><i style="--w:${U.pts/max*100}%"></i></div><b class="pts">+<span>0</span></b></div>
+      <div class="sd-cat"><span>${U.ico}</span>${U.name}</div>
+      <div class="sd-side ai"><b class="pts">+<span>0</span></b><div class="sd-bar"><i style="--w:${A.pts/max*100}%"></i></div><span class="raw">${A.raw}</span></div>`;
+    cats.appendChild(row);
+    requestAnimationFrame(()=>row.classList.add("in"));
+    await sleep(280);
+    row.classList.add("go");
+    const [pu,pa]=row.querySelectorAll(".pts span");
+    await Promise.all([tween(pu,0,U.pts,700), tween(pa,0,A.pts,700)]);
+    // 부문 승자 표시 + 총점에 합산
+    if(U.pts!==A.pts) row.querySelector(U.pts>A.pts?".sd-side.me":".sd-side.ai").classList.add("win");
+    const pcu=cu, pca=ca; cu+=U.pts; ca+=A.pts;
+    document.getElementById(U.pts>=A.pts?"sdU":"sdA").classList.remove("bump");
+    void document.body.offsetWidth;
+    if(U.pts!==A.pts) document.getElementById(U.pts>A.pts?"sdU":"sdA").classList.add("bump");
+    await Promise.all([tween(tU,pcu,cu,450), tween(tA,pca,ca,450)]);
+    tug();
+    await sleep(280);
+  }
+  // 두구두구 — 최종 판정
+  step.textContent="최종 판정";
+  const sd=document.getElementById("sd"); sd.classList.add("suspense");
+  await sleep(1300);
+  sd.classList.remove("suspense");
+  const fin=document.getElementById("sdFinal");
+  const draw=tu===ta, iWon=tu>ta;
+  const winsU=su.filter((c,i)=>c.pts>sa[i].pts).length, winsA=sa.filter((c,i)=>c.pts>su[i].pts).length;
+  if(!draw){ document.getElementById(iWon?"sdU":"sdA").classList.add("champ"); document.getElementById(iWon?"sdA":"sdU").classList.add("lose"); }
+  fin.innerHTML=`<div class="big">${draw?"🤝 무승부!":iWon?"🏆 당신의 인생이 이겼어요!":`🌸 ${a.name}의 인생이 이겼어요`}</div>
+    <div class="sub">${tu.toLocaleString("ko-KR")} : ${ta.toLocaleString("ko-KR")} · 부문 승리 ${winsU} : ${winsA} · 점수 차 ${Math.abs(tu-ta).toLocaleString("ko-KR")}</div>
+    <div class="note">${finalNote(su,sa,iWon,draw,a)}</div>`;
+  fin.classList.add("on");
+  const sk=document.getElementById("sdSkip"); if(sk) sk.style.display="none";
+  if(!draw) dropCrownOn(document.querySelector(iWon?"#sdU .sd-face":"#sdA .sd-face"), iWon);
+  await sleep(900);
+  done();
+}
+/* 승부를 가른 부문을 한 줄로 */
+function finalNote(su,sa,iWon,draw,a){
+  if(draw) return "자산도 사람도 재능도, 둘의 인생은 서로 다른 모양으로 같은 무게였어요.";
+  const gaps=su.map((c,i)=>({name:c.name, d:(c.pts-sa[i].pts)*(iWon?1:-1)})).sort((x,y)=>y.d-x.d);
+  const best=gaps[0], worst=gaps[gaps.length-1];
+  return iWon
+    ? `승부를 가른 건 <b>${best.name}</b>이었어요.${worst.d<0?` ${a.name}${josa(a.name,"은","는")} <b>${worst.name}</b>에서 앞섰지만 뒤집지 못했어요.`:""}`
+    : `${a.name}${josa(a.name,"이","가")} <b>${best.name}</b>에서 크게 앞섰어요.${worst.d<0?` 당신은 <b>${worst.name}</b>에서 이겼어요.`:""}`;
+}
+function josa(w,a,b){ const c=String(w||"").charCodeAt(String(w||"").length-1); return (c>=0xAC00&&c<=0xD7A3&&(c-0xAC00)%28>0)?a:b; }
+function dropCrownOn(face, mine){
+  if(!face) return;
+  const c=document.createElement("div"); c.className="crown-drop"; c.textContent="👑"; face.appendChild(c);
+  if(REDUCED) return;
+  const host=document.createElement("div"); host.className="confetti-host"; document.body.appendChild(host);
+  const set=mine?["🎉","✨","🎊","⭐","💛"]:["🌸","✨","🌼"];
+  for(let i=0;i<34;i++){ const s=document.createElement("span"); s.textContent=set[i%set.length];
+    s.style.left=Math.random()*100+"%"; s.style.animationDelay=(Math.random()*0.6)+"s"; s.style.fontSize=(14+Math.random()*16)+"px"; host.appendChild(s); }
+  setTimeout(()=>host.remove(), 3000);
+}
+const REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+/* 최종 자산이 0에서부터 차오른다 */
+function countUp(){
+  document.querySelectorAll(".count").forEach(el=>{
+    const to=Number(el.dataset.to)||0;
+    if(REDUCED){ el.textContent=to; return; }
+    const t0=performance.now()+500, dur=1300;
+    function step(t){
+      const k=Math.max(0,Math.min(1,(t-t0)/dur)); const e=1-Math.pow(1-k,3);
+      el.textContent=Math.round(to*e).toLocaleString("ko-KR");
+      if(k<1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  });
+}
+/* 승자에게 왕관이 떨어지고 꽃가루가 날린다 */
+function dropCrown(){
+  const win=document.querySelector(".person.win"); if(!win||REDUCED) return;
+  const c=document.createElement("div"); c.className="crown-drop"; c.textContent="👑";
+  win.querySelector(".p-face").appendChild(c);
+  const host=document.createElement("div"); host.className="confetti-host"; document.body.appendChild(host);
+  const set=["🎉","✨","🎊","⭐","💛"];
+  for(let i=0;i<28;i++){ const s=document.createElement("span"); s.textContent=set[i%set.length];
+    s.style.left=Math.random()*100+"%"; s.style.animationDelay=(Math.random()*0.5)+"s"; s.style.fontSize=(14+Math.random()*14)+"px"; host.appendChild(s); }
+  setTimeout(()=>host.remove(), 2600);
+}
+function restart(){
+  localStorage.removeItem("secondLife_players");
+  localStorage.removeItem("secondLife_gameState");
+  localStorage.removeItem("secondLife_result");
+  location.href="index.html";
+}
+window.onload=render;
+</script>
+<p style="margin:24px 0 32px;text-align:center;font-size:12px;font-weight:600;color:rgba(27,35,64,.5)">© 2026 edagim29. All rights reserved.</p>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="제2의 인생">
+  <!-- 「제2의 인생」 심볼: 숫자 2가 인생길이 되고, 그 꼭대기에서 새싹(두 번째 삶)이 돋는다 -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5B8BFF"/>
+      <stop offset="1" stop-color="#7C5CE0"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFE7A3"/>
+      <stop offset="1" stop-color="#FFC75A"/>
+    </radialGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9BF0B4"/>
+      <stop offset="1" stop-color="#3CCB7F"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="0" fill="url(#bg)"/><g transform="translate(51.2 51.2) scale(.8)">
+  <circle cx="392" cy="128" r="54" fill="url(#sun)" opacity=".95"/>
+  <!-- 바닥: 새봄시의 바다 물결 -->
+  <path d="M0 430 Q64 404 128 430 T256 430 T384 430 T512 430 V512 H0Z" fill="#FFFFFF" opacity=".14"/>
+  <!-- 숫자 2 = 인생길 -->
+  <path d="M168 222 C168 166 210 132 260 132 C314 132 348 168 348 212 C348 258 312 288 268 324 L176 396 H352"
+        fill="none" stroke="#FFFFFF" stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- 길 위의 발자국(보드 칸) -->
+  <g fill="#7C5CE0" opacity=".55">
+    <circle cx="214" cy="396" r="9"/><circle cx="264" cy="396" r="9"/><circle cx="314" cy="396" r="9"/>
+  </g>
+  <!-- 새싹 -->
+  <path d="M260 132 V92" stroke="#3CCB7F" stroke-width="12" stroke-linecap="round"/>
+  <path d="M260 98 C226 98 206 78 204 50 C236 50 258 68 260 98Z" fill="url(#leaf)"/>
+  <path d="M260 92 C292 92 314 70 318 40 C284 40 262 60 260 92Z" fill="url(#leaf)"/>
+</g></svg>

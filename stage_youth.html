@@ -1,0 +1,2802 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>제2의 인생 · 청년기</title>
+<style>
+/* ============================================================
+   「제2의 인생」 stage_high.html — 고등학생
+   레이아웃 골격 v2: 보드가 화면 테두리를 두르고, 가운데가 무대.
+   ------------------------------------------------------------
+   설계 원칙
+   1) 선택지는 무대 안에 있다. 구조적으로 아래로 밀려날 수 없다.
+   2) 색은 장식이 아니라 신호다. 메인 1색 + 무채색 + 의미색 3.
+      칸은 전부 무채색. 내 위치·목적지만 켜진다.
+   3) 글자를 줄인다. 스탯 이름은 아이콘, 로그는 1줄.
+   ============================================================ */
+:root{
+  /* 메인 1색 — 나 / 지금 / 핵심 행동 */
+  --main:#4F7CFF;
+  --main-weak:rgba(79,124,255,.12);
+  --main-line:rgba(79,124,255,.34);
+
+  /* 상대 — 무채색 계열로 물러나 있는다 */
+  --rival:#8A94B8;
+  --rival-weak:rgba(138,148,184,.14);
+
+  /* 의미색 — 오직 상태 전달용. 장식 금지 */
+  --pos:#1F9B78;
+  --neg:#E0476B;
+  --warn:#C98A00;
+  --romance:#FF6FB1;
+  /* 모달·배지에서 쓰는 보조색 (정의가 빠져 배지가 투명하던 문제) */
+  --purple:#7C5CE0; --blue:#4F7CFF; --coral:#FF7A6B; --pink:#FF6FB1;
+  --child-bg1:#FFF3F7; --child-bg3:#EEF1FF;
+
+  /* 무채색 스케일 */
+  --ink:#1B2340;
+  --ink-2:#4A5372;
+  --muted:#858DAC;
+  --line:rgba(27,35,64,.10);
+  --line-2:rgba(27,35,64,.16);
+  --card:#FFFFFF;
+  --sunk:#F2F4F9;
+  --bg:#EEF1F7;
+
+  --r:14px;
+  --shadow:0 6px 20px rgba(27,35,64,.09);
+  --shadow-up:0 14px 34px rgba(27,35,64,.16);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  color:var(--ink);
+  background:var(--bg);
+  overflow:hidden;               /* 스크롤이 생기면 설계가 실패한 것이다 */
+}
+/* 시대감은 배경 이미지가 담당한다. UI는 조용히 있는다. */
+body::before{
+  content:"";position:fixed;inset:0;z-index:-1;
+  background:url("./image/bg/youth.png") center/cover no-repeat;
+  opacity:.5;
+}
+body::after{
+  content:"";position:fixed;inset:0;z-index:-1;
+  background:linear-gradient(180deg, rgba(238,241,247,.82), rgba(238,241,247,.94));
+}
+
+.loadmask{
+  position:fixed;inset:0;z-index:200;display:grid;place-items:center;
+  background:var(--bg);color:var(--muted);font-size:14px;font-weight:800;
+}
+
+/* ── 전체 골격 ───────────────────────────────────────────── */
+.wrap{
+  height:100vh;padding:10px 12px;
+  display:grid;
+  grid-template-rows:auto 1fr auto;
+  gap:8px;
+}
+
+/* ── 상단바: 얇게. 제목 + 시대 + 라운드 + 타임라인 ── */
+.topbar{
+  display:flex;align-items:center;gap:12px;
+  padding:0 4px;min-height:34px;
+}
+.gtitle{font-size:14px;font-weight:900;color:var(--ink);letter-spacing:-.3px;white-space:nowrap;}
+.stage-now{
+  font-size:12px;font-weight:900;color:var(--main);
+  background:var(--main-weak);border-radius:999px;padding:5px 11px;white-space:nowrap;
+}
+.timeline{display:flex;gap:4px;margin-left:auto;}
+.tl{
+  font-size:11px;font-weight:800;color:var(--muted);
+  padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.6);
+  white-space:nowrap;
+}
+.tl b{display:none;}                        /* 글자 걷어냄: 아이콘만 */
+.tl.done{opacity:.4;}
+.tl.now{background:var(--main);color:#fff;}
+.tl.now b{display:inline;margin-left:4px;font-size:10.5px;}   /* 현재 시대만 이름 표시 */
+
+/* ── 플레이 영역: [나] [보드+무대] [상대] ── */
+.play{
+  display:grid;
+  grid-template-columns:210px minmax(0,1fr) 210px;
+  gap:10px;min-height:0;
+}
+
+/* ── 좌우 패널 ── */
+.pcol{
+  background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);
+  padding:12px;display:flex;flex-direction:column;gap:10px;min-height:0;
+  border-top:3px solid transparent;
+}
+.pcol.is-user{border-top-color:var(--main);}
+.pcol.is-ai{border-top-color:var(--rival);}
+.pcol.turn{box-shadow:0 0 0 2px var(--main), var(--shadow-up);}
+.pcol.is-ai.turn{box-shadow:0 0 0 2px var(--rival), var(--shadow-up);}
+
+.rc-ava{
+  height:145px;border-radius:10px;background:var(--sunk);
+  display:flex;align-items:flex-end;justify-content:center;overflow:hidden;flex:0 0 auto;
+}
+.rc-ava img{width:100%;height:100%;object-fit:contain;}
+.pcol.is-ai .rc-ava img, .settle-person.ai .settle-face img{filter:hue-rotate(-32deg) saturate(1.18);transform:scaleX(-1);}
+.rc-name{font-size:13px;font-weight:900;color:var(--ink);display:flex;align-items:center;gap:5px;}
+.rc-dot{width:7px;height:7px;border-radius:50%;background:var(--main);flex:0 0 auto;}
+.is-ai .rc-dot{background:var(--rival);}
+
+/* 스탯: 아이콘 + 게이지 + 등급. 이름 글자 없음 */
+.rc-stats{display:flex;flex-direction:column;gap:7px;}
+.grade-chip{display:grid;grid-template-columns:15px 1fr 13px;align-items:center;gap:7px;}
+.grade-chip svg{width:15px;height:15px;color:var(--muted);flex:0 0 auto;}
+.grade-bar{height:5px;border-radius:99px;background:var(--sunk);overflow:hidden;}
+.grade-fill{display:block;height:100%;border-radius:99px;background:var(--main);transition:width .3s;}
+.is-ai .grade-fill{background:var(--rival);}
+.grade-chip b{font-size:10px;font-weight:900;color:var(--muted);text-align:right;}
+.grade-chip.flash .grade-fill{background:var(--pos);}
+.grade-chip.flash b{color:var(--pos);}
+
+/* 패널 하단 요약: 최소한의 글자만 */
+.rc-meta{margin-top:auto;display:flex;flex-direction:column;gap:4px;}
+.rc-sub{font-size:11px;font-weight:800;color:var(--muted);display:flex;align-items:center;gap:5px;}
+.rc-sub b{color:var(--ink-2);font-weight:900;}
+
+/* ── 보드 링: 8열×8행. 테두리 28칸 = HIGH_BOARD 28칸 ── */
+.boardring{
+  display:grid;
+  grid-template-columns:repeat(8, 1fr);
+  grid-template-rows:repeat(8, 1fr);
+  gap:5px;min-height:0;
+}
+#miniboard{display:contents;}     /* 칸들이 boardring 격자에 직접 참여 */
+
+/* 시계방향 배치: 상단 8 → 우측 6 → 하단 8(역방향) → 좌측 6(역방향) */
+.cell:nth-child(1){grid-area:1/1;}  .cell:nth-child(2){grid-area:1/2;}
+.cell:nth-child(3){grid-area:1/3;}  .cell:nth-child(4){grid-area:1/4;}
+.cell:nth-child(5){grid-area:1/5;}  .cell:nth-child(6){grid-area:1/6;}
+.cell:nth-child(7){grid-area:1/7;}  .cell:nth-child(8){grid-area:1/8;}
+.cell:nth-child(9){grid-area:2/8;}  .cell:nth-child(10){grid-area:3/8;}
+.cell:nth-child(11){grid-area:4/8;} .cell:nth-child(12){grid-area:5/8;}
+.cell:nth-child(13){grid-area:6/8;} .cell:nth-child(14){grid-area:7/8;}
+.cell:nth-child(15){grid-area:8/8;} .cell:nth-child(16){grid-area:8/7;}
+.cell:nth-child(17){grid-area:8/6;} .cell:nth-child(18){grid-area:8/5;}
+.cell:nth-child(19){grid-area:8/4;} .cell:nth-child(20){grid-area:8/3;}
+.cell:nth-child(21){grid-area:8/2;} .cell:nth-child(22){grid-area:8/1;}
+.cell:nth-child(23){grid-area:7/1;} .cell:nth-child(24){grid-area:6/1;}
+.cell:nth-child(25){grid-area:5/1;} .cell:nth-child(26){grid-area:4/1;}
+.cell:nth-child(27){grid-area:3/1;} .cell:nth-child(28){grid-area:2/1;}
+
+/* ── 정보 계층 두 겹 ──
+   색  = 카테고리 6종. 판을 보는 순간 "무슨 종류인지"가 0.1초에 읽힌다.
+   아이콘 = 사건. 같은 색 안에서 "무슨 일이 벌어지는지"가 칸마다 갈린다.
+   현재 칸만 풀컬러로 살아난다 — 옅은 팔레트는 배경, 현재 칸은 전경. */
+.cell{
+  position:relative;border-radius:10px;
+  background:var(--c-bg, var(--card));border:1px solid var(--c-line, var(--line));
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  min-height:0;overflow:hidden;
+  transition:background .2s, border-color .2s, transform .2s, box-shadow .2s;
+}
+.cell .cn{display:none;}                       /* 칸 번호 글자 걷어냄 */
+.cell .cell-ico{font-size:18px;line-height:1;transition:transform .2s;}
+.cell .cell-name{
+  font-size:9px;font-weight:800;color:var(--c-ink, var(--muted));
+  text-align:center;line-height:1.15;padding:0 2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;
+}
+
+/* 카테고리 6종 — 옅은 파스텔 고정 팔레트 */
+.cell.cat-study  {--c-bg:#F1ECFF; --c-line:#DFD2FF; --c-ink:#6B52B8; --c-main:#7C5CE0;}
+.cell.cat-work   {--c-bg:#FFF7DC; --c-line:#FBE7A6; --c-ink:#9A7414; --c-main:#D9A417;}
+.cell.cat-love   {--c-bg:#FFEDF4; --c-line:#FFD2E2; --c-ink:#B54B7C; --c-main:#F0629B;}
+.cell.cat-event  {--c-bg:#E9F1FF; --c-line:#CEDFFF; --c-ink:#3F63B8; --c-main:#4F7CFF;}
+.cell.cat-rest   {--c-bg:#E8F7EE; --c-line:#C6E9D6; --c-ink:#2C7A57; --c-main:#34A06C;}
+.cell.cat-branch {--c-bg:#FFF0E3; --c-line:#FFD9BC; --c-ink:#A5601C; --c-main:#E0842A;}
+
+/* 코너 랜드마크: 판의 기둥. 크게, 진하게 */
+.cell.corner{border-width:2px;border-radius:14px;}
+.cell.corner .cell-ico{font-size:26px;}
+.cell.corner .cell-name{font-size:9.5px;font-weight:900;}
+/* 시작·도착: 좌측 상단에서 맞닿는 두 칸 */
+.cell.cat-start  {--c-bg:#FFF3F7; --c-line:#FFC9DE; --c-ink:#C0417A; --c-main:#FF6FB1;}
+.cell.cat-finish {--c-bg:#EAF6F1; --c-line:#B9E3D0; --c-ink:#1F7A57; --c-main:#1F9B78;}
+
+/* 현재 칸: 색이 완전히 살아난다 */
+.cell.cur{
+  background:var(--c-main, var(--main));
+  border-color:var(--c-main, var(--main));
+  transform:scale(1.06);z-index:3;
+  box-shadow:0 0 0 3px #fff, 0 8px 20px rgba(27,35,64,.22);
+  animation:cellGlow 1.8s ease-in-out infinite;
+}
+.cell.cur .cell-name{color:#fff;}
+.cell.cur .cell-ico{transform:scale(1.12);}
+.cell.next{
+  border-style:dashed;border-color:var(--c-main, var(--main));
+  animation:cellNext 1s ease-in-out infinite;
+}
+.step-badge{
+  position:absolute;top:3px;right:3px;
+  font-size:8.5px;font-weight:900;color:#fff;background:var(--main);
+  border-radius:99px;padding:1px 5px;
+}
+/* 말 */
+.tok{
+  position:absolute;bottom:2px;font-size:14px;line-height:1;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.2));
+}
+.tok.user{left:4px;}
+.tok.ai{right:4px;}
+
+/* ── 무대: 격자 가운데. 여기가 선택지의 집 ── */
+.stage{
+  grid-column:2 / 8;grid-row:2 / 8;
+  border-radius:var(--r);
+  background:var(--card);
+  box-shadow:var(--shadow);
+  display:grid;grid-template-rows:auto 1fr auto;
+  min-height:0;overflow:hidden;
+  position:relative;
+  border:1px solid var(--line);
+}
+/* 상황별 배경: 새 PNG 없이 CSS 그라디언트로 */
+.stage::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:var(--situation, linear-gradient(180deg, rgba(79,124,255,.05), transparent 60%));
+  transition:background .35s;
+}
+.stage > *{position:relative;z-index:1;}
+
+/* 무대 머리: 차례 표시 */
+.rmid{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 13px;border-bottom:1px solid var(--line);
+  min-height:0;
+}
+.rmid-turn{font-size:12px;font-weight:900;color:var(--main);white-space:nowrap;}
+.rmid-move{font-size:11.5px;font-weight:800;color:var(--ink-2);}
+.rmid-move .big{font-size:15px;font-weight:900;color:var(--main);margin-right:5px;}
+.rmid-feel{font-size:11px;font-weight:800;color:var(--muted);margin-left:auto;white-space:nowrap;}
+
+/* ── 무대 본문 ──
+   좌우 2단 카드가 아니라 레이어다.
+   뒤: 시대 배경 + 사건 아이콘 워터마크 / 가운데: 배우가 바닥에 선다 / 위: 말풍선 */
+.scene{
+  position:relative;display:grid;grid-template-rows:auto 1fr;
+  min-height:0;padding:10px 14px 0;overflow:hidden;
+}
+/* 뒤 레이어: 시대 배경. 새 PNG 없이 이미 있는 bg/youth.png를 옅게 깐다 */
+.scene-bg{
+  position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:url("./image/bg/youth.png") center/cover no-repeat;
+  opacity:.14;
+  -webkit-mask-image:linear-gradient(180deg,#000 40%,transparent 92%);
+          mask-image:linear-gradient(180deg,#000 40%,transparent 92%);
+}
+/* 사건 아이콘 워터마크: 이 칸이 무슨 일인지 무대 뒤에 크게 */
+.scene-ico{
+  position:absolute;right:16px;top:50%;transform:translateY(-52%);
+  font-size:132px;line-height:1;z-index:0;pointer-events:none;
+  opacity:.09;filter:saturate(.7);
+  transition:opacity .35s, transform .35s;
+}
+.scene > *:not(.scene-bg):not(.scene-ico){position:relative;z-index:1;}
+
+.scene-head{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.scene-chip{
+  font-size:10.5px;font-weight:900;color:#fff;
+  background:var(--stage-main, var(--main));border-radius:99px;padding:3px 10px;
+  transition:background .35s;
+}
+.turn-count{font-size:10.5px;font-weight:800;color:var(--muted);margin-left:auto;}
+
+/* 무대: 배우는 아래, 말풍선은 위 */
+.scene-stage{
+  position:relative;min-height:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  gap:6px;padding-bottom:4px;
+}
+/* 바닥: 배우가 떠 있지 않게 그림자를 깐다 */
+.scene-stage::after{
+  content:"";position:absolute;bottom:2px;left:50%;transform:translateX(-50%);
+  width:150px;height:13px;border-radius:50%;
+  background:radial-gradient(ellipse at center, rgba(27,35,64,.20), transparent 70%);
+  pointer-events:none;
+}
+.scene-bubble{
+  position:relative;max-width:86%;
+  background:rgba(255,255,255,.95);border:1px solid var(--line);
+  border-radius:15px;padding:9px 14px;
+  box-shadow:0 6px 18px rgba(27,35,64,.10);
+  animation:bubblePop .32s cubic-bezier(.2,1.3,.4,1) both;
+}
+.scene-bubble::after{        /* 말풍선 꼬리 */
+  content:"";position:absolute;bottom:-7px;left:50%;transform:translateX(-50%) rotate(45deg);
+  width:12px;height:12px;background:rgba(255,255,255,.95);
+  border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+}
+.hero-body{
+  height:100%;max-height:196px;min-height:0;
+  display:flex;align-items:flex-end;justify-content:center;
+  animation:heroBreathe 3.4s ease-in-out infinite;
+}
+.hero-body img{height:100%;width:auto;max-width:100%;object-fit:contain;
+  filter:drop-shadow(0 6px 10px rgba(27,35,64,.16));}
+.hero-ava{height:100%;display:flex;align-items:flex-end;justify-content:center;}
+.hero-ava img{height:100%;width:auto;object-fit:contain;}
+/* 표정 교체: 크로스페이드 */
+.hero-body.react img{animation:faceSwap .42s ease both;}
+.scene-say{font-size:14.5px;font-weight:900;color:var(--ink);line-height:1.4;text-align:center;}
+.scene-sub{font-size:11.5px;font-weight:800;color:var(--muted);line-height:1.45;margin-top:3px;text-align:center;}
+
+/* 연애 장면: 둘이 마주 선다 */
+.romance-faces{display:flex;align-items:flex-end;justify-content:center;gap:10px;width:100%;height:100%;}
+.rf-me,.rf-npc{height:100%;max-height:176px;display:flex;align-items:flex-end;justify-content:center;}
+.rf-me img,.rf-npc img{height:100%;width:auto;object-fit:contain;
+  filter:drop-shadow(0 6px 10px rgba(27,35,64,.16));transition:filter .3s, transform .3s;}
+.rf-npc.glow img{filter:drop-shadow(0 0 14px rgba(240,98,155,.55));transform:translateY(-4px);}
+.rf-npc.dim img{filter:grayscale(.55) opacity(.72);}
+.rf-heart{font-size:22px;align-self:center;}
+.rf-heart.beat{animation:heartBeat 1s ease-in-out infinite;}
+.rf-heart.far{opacity:.5;}
+
+/* ── 선택지: 무대 안. 밀려날 수 없다 ── */
+.action-panel{padding:11px 14px 13px;}
+.ap-label{font-size:11px;font-weight:800;color:var(--muted);margin-bottom:7px;}
+.act-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:7px;}
+.btn{border:none;cursor:pointer;font-family:inherit;font-weight:900;border-radius:10px;
+     transition:transform .1s, background .15s, border-color .15s;}
+.btn:active{transform:translateY(2px);}
+.act-btn{
+  background:var(--card);border:1.5px solid var(--line-2);color:var(--ink);
+  padding:10px 9px;font-size:12.5px;min-height:56px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;
+}
+.act-btn .ai{font-size:17px;line-height:1;}
+.act-btn:hover{border-color:var(--main);background:var(--main-weak);}
+.act-btn.big,.btn-roll{
+  background:var(--main);color:#fff;border:none;font-size:14px;min-height:48px;width:100%;
+  flex-direction:row;gap:7px;
+}
+.act-btn.big:hover,.btn-roll:hover{background:#3F6AEB;}
+/* 상대 차례: 하나가 켜지고 나머지는 물러난다 */
+.act-btn.ai-thinking{opacity:.85;cursor:default;pointer-events:none;}
+.act-btn.ai-picked{border-color:var(--rival);background:var(--rival-weak);opacity:1;}
+.act-btn.ai-dim{opacity:.3;}
+.wait-ai{font-size:12px;font-weight:800;color:var(--muted);text-align:center;padding:14px;}
+
+/* ── 로그: 1줄만. 나머지는 접힘 ── */
+.logbar{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 12px;border-radius:10px;
+  background:rgba(255,255,255,.7);min-height:30px;
+}
+.log{flex:1;min-width:0;overflow:hidden;}
+.logitem{
+  font-size:11.5px;font-weight:800;color:var(--ink-2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.logitem:not(:first-child){display:none;}     /* 최근 1줄만 */
+.log.open{max-height:120px;overflow-y:auto;}
+.log.open .logitem{display:block;white-space:normal;padding:2px 0;}
+.log-toggle{
+  font-size:10.5px;font-weight:900;color:var(--muted);background:none;border:none;
+  cursor:pointer;padding:3px 7px;border-radius:6px;white-space:nowrap;
+}
+.log-toggle:hover{background:var(--sunk);color:var(--main);}
+
+/* ── 모달 ── */
+.overlay{
+  position:fixed;inset:0;z-index:100;display:none;place-items:center;padding:20px;
+  background:rgba(27,35,64,.42);
+}
+.overlay.on{display:grid;}
+.modal{
+  width:min(100%,470px);max-height:84vh;overflow:auto;
+  background:var(--card);border-radius:18px;padding:22px;box-shadow:var(--shadow-up);
+}
+.m-type{
+  display:inline-block;font-size:11px;font-weight:900;color:#fff;
+  background:var(--main);border-radius:99px;padding:4px 11px;margin-bottom:9px;
+}
+.modal h2{font-size:20px;font-weight:900;color:var(--ink);margin-bottom:8px;line-height:1.3;}
+.m-desc{font-size:13px;font-weight:800;color:var(--ink-2);line-height:1.6;}
+.m-desc b{color:var(--main);}
+.rule-grid{display:flex;flex-direction:column;gap:7px;margin:13px 0;}
+.rule{
+  display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:10px;
+  background:var(--sunk);font-size:12px;font-weight:800;color:var(--ink-2);line-height:1.45;
+}
+.rule .ri{font-size:18px;flex:0 0 22px;text-align:center;}
+.btn-primary{
+  background:var(--main);color:#fff;padding:13px;font-size:14px;width:100%;
+}
+.btn-primary:hover{background:#3F6AEB;}
+.settle-duo{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin:13px 0;}
+.settle-person{
+  padding:11px;border-radius:12px;background:var(--sunk);text-align:center;
+  border-top:3px solid var(--rival);
+}
+.settle-person.user{border-top-color:var(--main);}
+.settle-face{height:96px;margin-bottom:7px;}
+.settle-face img{width:100%;height:100%;object-fit:contain;}
+.settle-name{font-size:12.5px;font-weight:900;color:var(--ink);margin-bottom:4px;}
+.settle-person .rc-sub{justify-content:center;}
+
+/* ── 타이밍 게이지 ── */
+.gauge-wrap{margin:15px 0;}
+.gauge-track{
+  position:relative;height:26px;border-radius:99px;background:var(--sunk);overflow:hidden;
+}
+.gz-perfect,.gz-good{position:absolute;top:0;bottom:0;}
+.gz-good{background:rgba(31,155,120,.16);}
+.gz-perfect{background:rgba(31,155,120,.38);z-index:1;}
+.gmarker{position:absolute;top:0;bottom:0;width:3px;background:var(--ink);z-index:2;border-radius:2px;}
+.gfeel{font-size:11.5px;font-weight:800;color:var(--muted);text-align:center;margin-top:7px;}
+.btn-hold{
+  background:var(--main);color:#fff;padding:15px;font-size:15px;width:100%;
+  user-select:none;touch-action:none;
+}
+.btn-hold.holding{background:var(--pos);transform:translateY(2px);}
+.tverdict{font-size:15px;font-weight:900;text-align:center;margin-top:11px;min-height:20px;}
+
+
+/* ── 떠오르는 수치 ── */
+.floatstat{
+  position:absolute;left:50%;top:38%;transform:translateX(-50%);
+  font-size:14px;font-weight:900;padding:5px 11px;border-radius:99px;
+  background:var(--card);box-shadow:var(--shadow);z-index:5;
+  animation:floatUp 1.3s ease forwards;pointer-events:none;
+}
+.floatstat.up{color:var(--pos);}
+.floatstat.down{color:var(--neg);}
+@keyframes floatUp{
+  0%{opacity:0;transform:translate(-50%,8px);}
+  20%{opacity:1;transform:translate(-50%,0);}
+  100%{opacity:0;transform:translate(-50%,-26px);}
+}
+.party{position:fixed;inset:0;pointer-events:none;z-index:150;}
+
+/* ============================================================
+   JS가 실제로 뿜는 클래스들 (마크업에서 역추출)
+   ============================================================ */
+
+/* ── 인라인 주사위 게이지 (홀드-릴리즈) ── */
+.roll-gauge{
+  position:relative;height:18px;border-radius:99px;background:var(--sunk);
+  overflow:hidden;margin-bottom:7px;opacity:.55;transition:opacity .2s;
+}
+.roll-gauge.on{opacity:1;}
+.rg-perfect,.rg-good{position:absolute;top:0;bottom:0;}
+.rg-good{background:rgba(31,155,120,.16);}
+.rg-perfect{background:rgba(31,155,120,.4);z-index:1;}
+.rg-marker{position:absolute;top:0;bottom:0;width:3px;border-radius:2px;background:var(--ink);z-index:2;}
+.roll-hint{font-size:11px;font-weight:800;color:var(--muted);text-align:center;margin-bottom:8px;}
+.dice-ico{font-size:16px;}
+.btn-roll.holding{background:var(--pos);transform:translateY(2px);}
+.btn-roll:disabled{opacity:.55;cursor:default;}
+
+/* ── 무대 애니메이션 ──
+   전부 CSS. 로직은 건드리지 않는다. */
+/* 배우가 살아 있다는 최소한의 신호: 아주 얕은 호흡 */
+@keyframes heroBreathe{
+  0%,100%{transform:translateY(0) scale(1);}
+  50%{transform:translateY(-3px) scale(1.008);}
+}
+/* 표정 교체: 새 얼굴이 부드럽게 들어온다 */
+@keyframes faceSwap{
+  0%{opacity:0;transform:scale(.94);}
+  100%{opacity:1;transform:scale(1);}
+}
+/* 말풍선: 대사가 바뀌면 톡 튀어나온다 */
+@keyframes bubblePop{
+  0%{opacity:0;transform:translateY(7px) scale(.94);}
+  100%{opacity:1;transform:translateY(0) scale(1);}
+}
+@keyframes heartBeat{
+  0%,100%{transform:scale(1);}
+  30%{transform:scale(1.22);}
+  45%{transform:scale(1.05);}
+}
+/* 현재 칸: 숨 쉬듯 은은하게. 판에서 내 위치를 놓치지 않게 */
+@keyframes cellGlow{
+  0%,100%{box-shadow:0 0 0 3px #fff, 0 8px 20px rgba(27,35,64,.22);}
+  50%{box-shadow:0 0 0 3px #fff, 0 8px 24px rgba(27,35,64,.30);}
+}
+/* 다음 도착 예정 칸 */
+@keyframes cellNext{
+  0%,100%{opacity:1;}
+  50%{opacity:.55;}
+}
+
+/* ── 말 이동 / 도착 ── */
+.tok.hop{animation:tokHop .24s ease;}
+@keyframes tokHop{50%{transform:translateY(-7px) scale(1.15);}}
+.cell.arrive{animation:cellArrive .5s ease;}
+@keyframes cellArrive{
+  0%{box-shadow:0 0 0 0 var(--main-line);}
+  60%{box-shadow:0 0 0 7px rgba(79,124,255,0);}
+  100%{box-shadow:0 0 0 0 rgba(79,124,255,0);}
+}
+.next-preview{font-size:11px;font-weight:800;color:var(--main);text-align:center;margin-top:5px;}
+
+/* ── 카드 뽑기 ── */
+.card-row{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:14px 0;}
+.card{
+  position:relative;aspect-ratio:3/4;cursor:pointer;
+  perspective:700px;transition:transform .2s, opacity .25s;
+}
+.card:hover{transform:translateY(-5px);}
+.card.dim{opacity:.28;pointer-events:none;}
+.face2{
+  position:absolute;inset:0;border-radius:12px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  padding:8px;text-align:center;
+  backface-visibility:hidden;transition:transform .5s;
+}
+.face2.back{
+  background:var(--main);color:#fff;font-size:26px;
+  display:grid;place-items:center;
+}
+.face2.front{
+  background:var(--card);border:1.5px solid var(--main);
+  transform:rotateY(180deg);
+}
+.card.flip .face2.back{transform:rotateY(180deg);}
+.card.flip .face2.front{transform:rotateY(360deg);}
+.card.rare .face2.front{border-color:var(--warn);box-shadow:0 0 0 2px rgba(201,138,0,.2);}
+.c-emoji{font-size:24px;line-height:1;}
+.c-name{font-size:11px;font-weight:900;color:var(--ink);line-height:1.25;}
+.c-eff{font-size:9.5px;font-weight:800;color:var(--muted);line-height:1.3;}
+
+/* ── 진로 분기 ── */
+.branch-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;}
+.prob{
+  font-size:10px;font-weight:900;border-radius:99px;padding:2px 7px;
+  background:var(--sunk);color:var(--muted);display:inline-block;margin-top:3px;
+}
+.prob.mid{background:rgba(201,138,0,.14);color:var(--warn);}
+
+/* ── 라운드 요약 ── */
+.round-card{
+  background:var(--sunk);border-radius:11px;padding:11px;margin:11px 0;
+  display:flex;flex-direction:column;gap:7px;
+}
+.round-row{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;font-weight:800;color:var(--ink-2);line-height:1.4;
+}
+.round-note{font-size:11.5px;font-weight:800;color:var(--muted);line-height:1.5;}
+
+/* ── 정산 ── */
+.settle-hero{
+  display:flex;align-items:center;gap:12px;
+  background:var(--sunk);border-radius:12px;padding:12px;margin:12px 0;
+}
+.sh-body{height:92px;flex:0 0 auto;display:flex;align-items:flex-end;}
+.sh-body img{height:100%;width:auto;object-fit:contain;}
+.settle-line{font-size:12.5px;font-weight:800;color:var(--ink-2);line-height:1.55;}
+.settle-line b{color:var(--main);font-weight:900;}
+
+/* ── 축하 효과 ── */
+.confetti{
+  position:absolute;top:-24px;font-size:17px;pointer-events:none;
+  animation:confFall 1.5s ease-in forwards;
+}
+@keyframes confFall{
+  0%{opacity:1;transform:translateY(0) rotate(0);}
+  100%{opacity:0;transform:translateY(96vh) rotate(320deg);}
+}
+
+/* ── 좁은 화면: 보드를 접고 세로로 ── */
+@media(max-width:1000px){
+  body{overflow:auto;}
+  .wrap{height:auto;min-height:100vh;}
+  .play{grid-template-columns:1fr;}
+  .pcol{flex-direction:row;align-items:center;gap:12px;}
+  .pcol .rc-ava{width:62px;height:62px;flex:0 0 auto;}
+  .pcol .rc-stats{flex:1;}
+  .pcol .rc-meta{margin-top:0;flex:0 0 auto;}
+  .boardring{grid-template-rows:repeat(8,minmax(40px,1fr));}
+  .stage{min-height:340px;}
+}
+@media(max-width:560px){
+  .boardring{gap:3px;}
+  .cell .cell-name{display:none;}      /* 아주 좁으면 이모지만 */
+  .cell .cell-ico{font-size:14px;}
+  .cell.corner .cell-ico{font-size:19px;}
+}
+.grade-chip{cursor:help;}
+.stat-tip{position:fixed;z-index:400;max-width:224px;background:#1B2340;color:#fff;font-size:11.5px;font-weight:700;line-height:1.55;padding:9px 12px;border-radius:11px;box-shadow:0 10px 28px rgba(0,0,0,.28);pointer-events:none;opacity:0;transform:translateY(5px);transition:opacity .12s,transform .12s;}
+.stat-tip.on{opacity:1;transform:translateY(0);}
+.stat-tip b{color:#FFD86F;font-weight:900;}
+.road-toast{position:fixed;left:50%;top:64px;transform:translate(-50%,-14px);z-index:350;background:#fff;border-radius:14px;padding:11px 18px;font-size:14px;font-weight:900;color:#1B2340;box-shadow:0 12px 30px rgba(27,35,64,.22);opacity:0;transition:opacity .28s,transform .28s;border:2px solid #1F9B78;white-space:nowrap;}
+.road-toast.bad{border-color:#E0476B;}
+.road-toast.on{opacity:1;transform:translate(-50%,0);}
+.road-toast .rt-ico{font-size:18px;margin-right:4px;}
+/* 🎒 가방 버튼 + 인벤토리 */
+.bag-btn{position:fixed;right:18px;bottom:18px;z-index:360;width:56px;height:56px;border:0;border-radius:50%;
+  background:#fff;box-shadow:0 8px 22px rgba(27,35,64,.22);font-size:26px;cursor:pointer;line-height:1;
+  display:grid;place-items:center;transition:transform .15s;}
+.bag-btn:hover{transform:translateY(-3px);}
+.bag-btn.has{box-shadow:0 0 0 3px var(--warn),0 8px 22px rgba(27,35,64,.22);}
+.bag-badge{position:absolute;top:-3px;right:-3px;min-width:20px;height:20px;border-radius:99px;background:var(--neg);
+  color:#fff;font-size:11px;font-weight:900;display:grid;place-items:center;padding:0 5px;}
+.bag-list{display:flex;flex-direction:column;gap:9px;margin:8px 0 4px;max-height:52vh;overflow-y:auto;}
+.bag-item{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:11px;background:var(--sunk);
+  border-radius:13px;padding:10px 12px;text-align:left;}
+.bag-item.rare{background:linear-gradient(120deg,#FFF6E0,#FFE9F2);box-shadow:inset 0 0 0 2px var(--warn);}
+.bi-emoji{font-size:28px;text-align:center;}
+.bi-info b{font-size:13.5px;font-weight:900;color:var(--ink);}
+.bi-info small{display:block;font-size:11px;font-weight:700;color:var(--muted);line-height:1.4;margin-top:2px;}
+.bi-use{padding:8px 15px;font-size:13px;background:var(--pos);}
+.bag-empty{text-align:center;color:var(--muted);font-weight:800;font-size:13px;line-height:1.7;padding:22px 0;}
+</style>
+
+<link rel="stylesheet" href="./world/world.css">
+<link rel="stylesheet" href="./fx/fx.css">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#5B8BFF">
+<link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="./icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="제2의 인생">
+<script src="./pwa.js" defer></script>
+</head>
+<body>
+
+<div class="loadmask" id="loadmask">서른을 향해…</div>
+
+<div class="wrap">
+
+  <!-- 상단바: 제목 · 시대 · 라운드 · 타임라인(아이콘만) -->
+  <div class="topbar">
+    <span class="gtitle">제2의 인생</span>
+    <span class="stage-now">🎓 청년기 · <span id="roundLabel">라운드 1</span></span>
+    <div class="timeline" id="timeline"></div>
+  </div>
+
+  <!-- [나] [보드 테두리 + 무대] [상대] -->
+  <div class="play">
+
+    <aside class="pcol is-user" id="userCol"></aside>
+
+    <div class="boardring">
+      <!-- 18칸이 display:contents 로 boardring 격자의 테두리에 직접 배치된다 -->
+      <div class="miniboard" id="miniboard"></div>
+
+      <!-- 무대: 격자 가운데(2~5열 × 2~4행). 선택지의 집 -->
+      <div class="stage" id="stageBox">
+        <div class="rmid" id="rmid">
+          <span class="rmid-turn" id="rmidTurn">🎲 내 차례</span>
+          <span class="rmid-move" id="rmidMove">버튼을 꾹 눌렀다 떼세요</span>
+          <span class="rmid-feel" id="rmidFeel"></span>
+        </div>
+
+        <div class="scene" id="scene">
+          <div class="scene-bg"></div>
+          <div class="scene-ico" id="sceneIco"></div>
+          <div class="scene-head">
+            <span class="scene-chip" id="sceneChip">청년기</span>
+            <span class="turn-count" id="turnCount"></span>
+          </div>
+          <div class="scene-stage">
+            <div class="scene-bubble" id="sceneBubble">
+              <div class="scene-say" id="sceneSay"></div>
+              <div class="scene-sub" id="sceneSub"></div>
+            </div>
+            <div class="hero-body" id="heroBody"></div>
+          </div>
+        </div>
+
+        <div class="action-panel" id="actionPanel"></div>
+      </div>
+    </div>
+
+    <aside class="pcol is-ai" id="aiCol"></aside>
+
+  </div>
+
+  <!-- 로그: 최근 1줄. 펼치기로 나머지 -->
+  <div class="logbar">
+    <div class="log" id="log"></div>
+    <button class="log-toggle" id="logToggle" onclick="toggleLog()">기록 ▾</button>
+  </div>
+
+</div>
+
+<!-- 카드뽑기 / 정산 공용 모달 -->
+<div class="overlay" id="modalOverlay"><div class="modal" id="modal"></div></div>
+
+<!-- 타이밍 게이지 모달 -->
+<div class="overlay" id="timingOverlay">
+  <div class="modal" style="text-align:center;">
+    <span class="m-type" id="tmType">🎯 타이밍</span>
+    <h2 id="tmTitle">타이밍을 잡아라!</h2>
+    <p class="m-desc" id="tmDesc">버튼을 꾹 눌렀다가 <b>좋은 순간</b>에 손을 떼세요.</p>
+    <div class="gauge-wrap">
+      <div class="gauge-track">
+        <div class="gz-perfect" id="gzPerfect"></div>
+        <div class="gz-good" id="gzGood"></div>
+        <div class="gmarker" id="gMarker"></div>
+      </div>
+      <div class="gfeel" id="gFeel">대기 중…</div>
+    </div>
+    <button class="btn btn-hold" id="holdBtn">🎯 꾹 누르기</button>
+    <div class="tverdict" id="tVerdict"></div>
+  </div>
+</div>
+
+<div class="party" id="party"></div>
+<script>
+/* ============================================================================
+   ★ 공통 블록 (모든 시대 HTML에 동일하게 복제) ★
+   - 정적 데이터(캐릭터/연애NPC/카드/직업) + 공통 함수
+   - localStorage에는 진행 상태만 저장. 정적 데이터는 저장하지 않음.
+   ============================================================================ */
+
+/* ---------- 플레이어 캐릭터 6명 ---------- */
+const CHARACTERS = {
+  female:[
+    { id:"female01", name:"당찬 현실주의자", tokenImage:"./image/user/female/1/icon.png", tokenFallback:"👩",
+      middleBaseImage:"./image/user/female/1/middle.png", middleBaseFallback:"👧",
+      highBaseImage:"./image/user/female/1/high.png", highBaseFallback:"👩‍🎓",
+      adultBaseImage:"./image/user/female/1/adult.png", adultBaseFallback:"👩",
+      statBonus:{intelligence:5,relationship:3},
+      passive:{key:"realist", desc:"월급날 +5, 안정 직업 유리, 창업 보상 낮음", salaryBonus:5, goodTier:["stable","public"], loveBonus:0, ventureNerf:true},
+      goodJobs:["공무원","공기업 직원","교사","대기업 직장인","간호사"], risk:"고위험 도전의 보상이 작다",
+      faces:{ normal:{image:"./image/user/female/1/face_normal.png",fallback:"🙂"}, happy:{image:"./image/user/female/1/face_happy.png",fallback:"😆"},
+              worried:{image:"./image/user/female/1/face_worried.png",fallback:"😳"}, sad:{image:"./image/user/female/1/face_sad.png",fallback:"🥲"},
+              burnout:{image:"./image/user/female/1/face_burnout.png",fallback:"🫠"} } },
+    { id:"female02", name:"따뜻한 몽상가", tokenImage:"./image/user/female/2/icon.png", tokenFallback:"👩‍🦰",
+      middleBaseImage:"./image/user/female/2/middle.png", middleBaseFallback:"👧",
+      highBaseImage:"./image/user/female/2/high.png", highBaseFallback:"👩‍🎓",
+      adultBaseImage:"./image/user/female/2/adult.png", adultBaseFallback:"👩",
+      statBonus:{charm:6,health:2},
+      passive:{key:"dreamer", desc:"연애 호감도 상승 쉬움, 예술·창작 직업 유리", loveBonus:0.12, goodTier:["art"]},
+      goodJobs:["화가","가수","배우","웹툰 작가","크리에이터","프리랜서 디자이너"], risk:"안정 직업 수입이 평범하다",
+      faces:{ normal:{image:"./image/user/female/2/face_normal.png",fallback:"🙂"}, happy:{image:"./image/user/female/2/face_happy.png",fallback:"😊"},
+              worried:{image:"./image/user/female/2/face_worried.png",fallback:"😟"}, sad:{image:"./image/user/female/2/face_sad.png",fallback:"😢"},
+              burnout:{image:"./image/user/female/2/face_burnout.png",fallback:"😩"} } },
+    { id:"female03", name:"야망 가득 승부사", tokenImage:"./image/user/female/3/icon.png", tokenFallback:"👱‍♀️",
+      middleBaseImage:"./image/user/female/3/middle.png", middleBaseFallback:"👧",
+      highBaseImage:"./image/user/female/3/high.png", highBaseFallback:"👩‍🎓",
+      adultBaseImage:"./image/user/female/3/adult.png", adultBaseFallback:"👩",
+      statBonus:{intelligence:4,luck:4},
+      passive:{key:"gambler", desc:"창업·투자 성공 보상 +20, 실패 손실 +10", winBonus:20, loseExtra:10, goodTier:["venture"]},
+      goodJobs:["스타트업 창업가","투자자","의사","변호사","대기업 직장인"], risk:"실패 시 손실이 크다",
+      faces:{ normal:{image:"./image/user/female/3/face_normal.png",fallback:"😎"}, happy:{image:"./image/user/female/3/face_happy.png",fallback:"🤩"},
+              worried:{image:"./image/user/female/3/face_worried.png",fallback:"😬"}, sad:{image:"./image/user/female/3/face_sad.png",fallback:"😞"},
+              burnout:{image:"./image/user/female/3/face_burnout.png",fallback:"😵"} } },
+    { id:"female04", name:"느긋한 자유인", tokenImage:"./image/user/female/4/icon.png", tokenFallback:"👩‍🦰",
+      middleBaseImage:"./image/user/female/4/middle.png", middleBaseFallback:"👧",
+      highBaseImage:"./image/user/female/4/high.png", highBaseFallback:"👩‍🎓",
+      adultBaseImage:"./image/user/female/4/adult.png", adultBaseFallback:"👩",
+      statBonus:{charm:4,health:4},
+      passive:{key:"freebird", desc:"잘 흔들리지 않는 사람 — 위기 피해 감소, 회복 빠름", crisisReduce:0.3, healHeal:1.3, goodTier:["art","stable"]},
+      goodJobs:["크리에이터","카페 사장","프리랜서 디자이너","운동선수","간호사"], risk:"한 방을 노리는 길에선 폭발력이 작다",
+      faces:{ normal:{image:"./image/user/female/4/face_normal.png",fallback:"🙂"}, happy:{image:"./image/user/female/4/face_happy.png",fallback:"😄"},
+              worried:{image:"./image/user/female/4/face_worried.png",fallback:"😟"}, sad:{image:"./image/user/female/4/face_sad.png",fallback:"🥲"},
+              burnout:{image:"./image/user/female/4/face_burnout.png",fallback:"🫠"} } }
+  ],
+  male:[
+    { id:"male01", name:"느긋한 평화주의자", tokenImage:"./image/user/male/1/icon.png", tokenFallback:"👨",
+      middleBaseImage:"./image/user/male/1/middle.png", middleBaseFallback:"👦",
+      highBaseImage:"./image/user/male/1/high.png", highBaseFallback:"👨‍🎓",
+      adultBaseImage:"./image/user/male/1/adult.png", adultBaseFallback:"👨",
+      statBonus:{health:5,relationship:3},
+      passive:{key:"peacemaker", desc:"위기 피해 감소, 건강 회복 이벤트 강화", crisisReduce:0.5, healHeal:1.5, goodTier:["stable","public"]},
+      goodJobs:["교사","간호사","공무원","공기업 직원","카페 사장"], risk:"고소득 직업 진입이 더디다",
+      faces:{ normal:{image:"./image/user/male/1/face_normal.png",fallback:"🙂"}, happy:{image:"./image/user/male/1/face_happy.png",fallback:"😄"},
+              worried:{image:"./image/user/male/1/face_worried.png",fallback:"😟"}, sad:{image:"./image/user/male/1/face_sad.png",fallback:"🥲"},
+              burnout:{image:"./image/user/male/1/face_burnout.png",fallback:"🫠"} } },
+    { id:"male02", name:"성실한 노력파", tokenImage:"./image/user/male/2/icon.png", tokenFallback:"🧑",
+      middleBaseImage:"./image/user/male/2/middle.png", middleBaseFallback:"👦",
+      highBaseImage:"./image/user/male/2/high.png", highBaseFallback:"👨‍🎓",
+      adultBaseImage:"./image/user/male/2/adult.png", adultBaseFallback:"👨",
+      statBonus:{intelligence:6,health:2},
+      passive:{key:"grinder", desc:"입시·취업 추천도 상승", examBonus:0.10, jobBonus:0.10, goodTier:["growth","corp"]},
+      goodJobs:["의사","변호사","개발자","대기업 직장인","공기업 직원","교사"], risk:"운에 기대는 도박엔 약하다",
+      faces:{ normal:{image:"./image/user/male/2/face_normal.png",fallback:"🙂"}, happy:{image:"./image/user/male/2/face_happy.png",fallback:"😊"},
+              worried:{image:"./image/user/male/2/face_worried.png",fallback:"😥"}, sad:{image:"./image/user/male/2/face_sad.png",fallback:"😢"},
+              burnout:{image:"./image/user/male/2/face_burnout.png",fallback:"😩"} } },
+    { id:"male03", name:"대담한 모험가", tokenImage:"./image/user/male/3/icon.png", tokenFallback:"👨‍🦱",
+      middleBaseImage:"./image/user/male/3/middle.png", middleBaseFallback:"👦",
+      highBaseImage:"./image/user/male/3/high.png", highBaseFallback:"👨‍🎓",
+      adultBaseImage:"./image/user/male/3/adult.png", adultBaseFallback:"👨",
+      statBonus:{charm:4,luck:4},
+      passive:{key:"adventurer", desc:"아이돌·창업·투자 대박 보상 증가, 큰 손실도 조금 더", winBonus:18, loseExtra:6, goodTier:["venture","art"]},
+      goodJobs:["아이돌","가수","배우","스타트업 창업가","투자자","운동선수","크리에이터"], risk:"안정 루트에선 빛이 덜 난다",
+      faces:{ normal:{image:"./image/user/male/3/face_normal.png",fallback:"😎"}, happy:{image:"./image/user/male/3/face_happy.png",fallback:"🤩"},
+              worried:{image:"./image/user/male/3/face_worried.png",fallback:"😬"}, sad:{image:"./image/user/male/3/face_sad.png",fallback:"😞"},
+              burnout:{image:"./image/user/male/3/face_burnout.png",fallback:"😵"} } },
+    { id:"male04", name:"다정한 조율가", tokenImage:"./image/user/male/4/icon.png", tokenFallback:"🧑‍🦱",
+      middleBaseImage:"./image/user/male/4/middle.png", middleBaseFallback:"👦",
+      highBaseImage:"./image/user/male/4/high.png", highBaseFallback:"👨‍🎓",
+      adultBaseImage:"./image/user/male/4/adult.png", adultBaseFallback:"👨",
+      statBonus:{relationship:5,charm:3},
+      passive:{key:"harmonizer", desc:"사람을 얻는 재주 — 호감이 잘 오르고 취업 추천도 상승", loveBonus:0.08, jobBonus:0.06, goodTier:["stable","public","corp"]},
+      goodJobs:["교사","간호사","대기업 직장인","공무원","카페 사장"], risk:"혼자 파고드는 전문직은 더디다",
+      faces:{ normal:{image:"./image/user/male/4/face_normal.png",fallback:"🙂"}, happy:{image:"./image/user/male/4/face_happy.png",fallback:"😄"},
+              worried:{image:"./image/user/male/4/face_worried.png",fallback:"😟"}, sad:{image:"./image/user/male/4/face_sad.png",fallback:"🥲"},
+              burnout:{image:"./image/user/male/4/face_burnout.png",fallback:"🫠"} } }
+  ]
+};
+function getChar(p){ if(!p.characterId) return null; const l=CHARACTERS[p.gender]||[]; return l.find(c=>c.id===p.characterId)||null; }
+
+/* 유년기 기본 전신 이미지 (캐릭터 선택 전) */
+const CHILD_BASE = {
+  female:{ image:"./image/user/base/child_female.png", fallback:"👧" },
+  male:  { image:"./image/user/base/child_male.png",  fallback:"👦" }
+};
+const STAGE_AVATARS = {
+  child: CHILD_BASE,
+  elementary: {
+    female:{ image:"./image/user/base/elementary_female.png", fallback:"👧" },
+    male:  { image:"./image/user/base/elementary_male.png", fallback:"👦" }
+  },
+  middle: {
+    female:{ image:"./image/user/base/elementary_female.png", fallback:"👧" },
+    male:  { image:"./image/user/base/elementary_male.png", fallback:"👦" }
+  }
+};
+// 고등학생부터는 선택한 캐릭터의 highBaseImage를 우선 사용
+function getStageAvatar(p, stage){
+  if(stage==="youth"||stage==="adult"||stage==="senior"){
+    const c=getChar(p);
+    if(c && c.adultBaseImage) return { image:c.adultBaseImage, fallback:c.adultBaseFallback||(p.gender==="female"?"👩":"👨") };
+    return { image:(p.gender==="female"?"./image/user/female/1/adult.png":"./image/user/male/1/adult.png"), fallback:(p.gender==="female"?"👩":"👨") };
+  }
+  if(stage==="high"){
+    const c=getChar(p);
+    if(c && c.highBaseImage) return { image:c.highBaseImage, fallback:c.highBaseFallback||(p.gender==="female"?"👩‍🎓":"👨‍🎓") };
+    return { image:(p.gender==="female"?"./image/user/female/1/high.png":"./image/user/male/1/high.png"), fallback:(p.gender==="female"?"👩‍🎓":"👨‍🎓") };
+  }
+  const table = STAGE_AVATARS[stage] || STAGE_AVATARS.child;
+  return table[p.gender] || table.male || CHILD_BASE.male;
+}
+
+/* ---------- 연애 후보 NPC 8명 (남4/여4) — 플레이어 캐릭터와 분리 ---------- */
+/* 직업은 미리보기 불가이므로 secretJob으로만 보관 */
+const LOVE_NPCS = [
+  { id:"love_m01", gender:"male", name:"다정한 선배", trait:"warm",   icon:"./image/love/male/m01/icon.png", iconFallback:"🧑‍🦱",
+    middle:"./image/love/male/m01/middle.png", high:"./image/love/male/m01/high.png", adult:"./image/love/male/m01/adult.png", baseFallback:"😊", secretJob:"교사" },
+  { id:"love_m02", gender:"male", name:"엉뚱한 친구", trait:"playful", icon:"./image/love/male/m02/icon.png", iconFallback:"🧑",
+    middle:"./image/love/male/m02/middle.png", high:"./image/love/male/m02/high.png", adult:"./image/love/male/m02/adult.png", baseFallback:"😄", secretJob:"크리에이터" },
+  { id:"love_m03", gender:"male", name:"차분한 모범생", trait:"calm",  icon:"./image/love/male/m03/icon.png", iconFallback:"👨‍🎓",
+    middle:"./image/love/male/m03/middle.png", high:"./image/love/male/m03/high.png", adult:"./image/love/male/m03/adult.png", baseFallback:"🙂", secretJob:"개발자" },
+  { id:"love_m04", gender:"male", name:"열정적인 운동부", trait:"bold", icon:"./image/love/male/m04/icon.png", iconFallback:"🧑‍🦰",
+    middle:"./image/love/male/m04/middle.png", high:"./image/love/male/m04/high.png", adult:"./image/love/male/m04/adult.png", baseFallback:"😎", secretJob:"운동선수" },
+  { id:"love_f01", gender:"female", name:"상냥한 반장", trait:"warm",  icon:"./image/love/female/f01/icon.png", iconFallback:"👩",
+    middle:"./image/love/female/f01/middle.png", high:"./image/love/female/f01/high.png", adult:"./image/love/female/f01/adult.png", baseFallback:"😊", secretJob:"간호사" },
+  { id:"love_f02", gender:"female", name:"신비로운 예술가", trait:"art", icon:"./image/love/female/f02/icon.png", iconFallback:"👩‍🎨",
+    middle:"./image/love/female/f02/middle.png", high:"./image/love/female/f02/high.png", adult:"./image/love/female/f02/adult.png", baseFallback:"🎨", secretJob:"화가" },
+  { id:"love_f03", gender:"female", name:"명랑한 인싸", trait:"playful", icon:"./image/love/female/f03/icon.png", iconFallback:"👧",
+    middle:"./image/love/female/f03/middle.png", high:"./image/love/female/f03/high.png", adult:"./image/love/female/f03/adult.png", baseFallback:"😆", secretJob:"아이돌" },
+  { id:"love_f04", gender:"female", name:"야무진 우등생", trait:"calm",  icon:"./image/love/female/f04/icon.png", iconFallback:"👩‍🎓",
+    middle:"./image/love/female/f04/middle.png", high:"./image/love/female/f04/high.png", adult:"./image/love/female/f04/adult.png", baseFallback:"🙂", secretJob:"변호사" }
+];
+
+/* ---------- 카드 데이터 (10종) ---------- */
+/* rarity: common/rare. effect는 stats 변화 또는 flag 설정 */
+const CARDS = [
+  { id:"card_art",    type:"talent",   name:"그림 재능", emoji:"🎨", rarity:"rare",   effect:{charm:6}, flag:"talentArt",   desc:"화가·디자이너·웹툰 유리" },
+  { id:"card_song",   type:"talent",   name:"노래 감각", emoji:"🎵", rarity:"rare",   effect:{charm:5,health:2}, flag:"talentSong", desc:"가수·아이돌 유리" },
+  { id:"card_smart",  type:"growth",   name:"똑똑한 머리", emoji:"📚", rarity:"common", effect:{intelligence:7}, desc:"지능이 자란다" },
+  { id:"card_active", type:"growth",   name:"넘치는 체력", emoji:"⚽", rarity:"common", effect:{health:7}, desc:"건강이 자란다" },
+  { id:"card_diligent",type:"personality",name:"성실함", emoji:"📋", rarity:"common", effect:{intelligence:3,health:2}, flag:"diligent", desc:"입시·취업 추천도 상승" },
+  { id:"card_friend", type:"bond",     name:"좋은 친구", emoji:"🤝", rarity:"common", effect:{relationship:7}, flag:"goodFriend", desc:"호감도·축의금 보너스" },
+  { id:"card_lucky",  type:"luck",     name:"행운의 기운", emoji:"🍀", rarity:"common", effect:{luck:7}, desc:"운이 따른다" },
+  { id:"card_shy",    type:"crisis",   name:"소심한 마음", emoji:"😶", rarity:"common", effect:{charm:-4}, desc:"매력이 살짝 준다" },
+  { id:"card_curious",type:"talent",   name:"호기심 폭발", emoji:"💡", rarity:"common", effect:{intelligence:4,luck:3}, desc:"세상이 궁금하다" },
+  { id:"card_weird",  type:"weird",    name:"수상한 카드", emoji:"🎴", rarity:"rare",   effect:{luck:2}, flag:"suspicious", desc:"훗날 빚·행운으로 연결?" },
+  /* ── 청년기 전용 카드 (type:youthlife) ──
+     이 파일에는 청년기 사건만 존재한다. 초등 습관 카드가 20대에게 나오던 시대 오염을 끊는다.
+     모든 카드는 대가가 있다 — 순수 이득 카드는 만들지 않는다. */
+  { id:"card_yo_firstpay", type:"youthlife", name:"첫 월급", emoji:"💰", rarity:"rare",   effect:{charm:4,health:-2}, flag:"firstSalary", desc:"통장에 찍힌 숫자의 무게를 안다" },
+  { id:"card_yo_overwork", type:"youthlife", name:"과로 훈장", emoji:"📊", rarity:"common", effect:{intelligence:6,health:-5}, flag:"overworked", desc:"일은 늘고 몸은 준다" },
+  { id:"card_yo_network",  type:"youthlife", name:"사회 인맥", emoji:"🤝", rarity:"rare",   effect:{relationship:6,money:-30}, flag:"network", desc:"사람은 남고 돈은 나간다" },
+  { id:"card_yo_indep",    type:"youthlife", name:"독립", emoji:"🏠", rarity:"common", effect:{health:3,charm:2,money:-60}, flag:"independent", desc:"자유에는 월세가 붙는다" },
+  { id:"card_yo_loan",     type:"youthlife", name:"첫 대출", emoji:"🏦", rarity:"common", effect:{money:120,luck:-3}, flag:"bigLoan", desc:"목돈을 쥐었지만 이자가 따라온다" },
+  { id:"card_yo_invest",   type:"youthlife", name:"투자 입문", emoji:"📈", rarity:"rare",   effect:{luck:5,money:-40}, flag:"investor", desc:"오를 수도, 내릴 수도" },
+  { id:"card_yo_burnout",  type:"youthlife", name:"번아웃", emoji:"⚡", rarity:"common", effect:{health:-6,intelligence:3}, flag:"burnoutScar", desc:"한계를 넘어봤다 · 대가가 크다" },
+  { id:"card_yo_travel",   type:"youthlife", name:"배낭여행", emoji:"✈️", rarity:"rare",   effect:{charm:5,health:3,money:-100}, flag:"traveler", desc:"세상이 넓어지고 통장은 얇아진다" },
+  { id:"card_yo_ghosted",  type:"youthlife", name:"연락 두절", emoji:"💔", rarity:"common", effect:{charm:-4,intelligence:2}, flag:"ghosted", desc:"이유도 모른 채 끝났다" },
+  { id:"card_yo_mentor",   type:"youthlife", name:"사수", emoji:"🗣️", rarity:"rare",   effect:{intelligence:5,relationship:3,health:-2}, flag:"mentor", desc:"일을 가르쳐준 사람을 만났다" }
+];
+/* 시대별로 어떤 카드 풀을 쓸지 필터링해서 사용 */
+function cardPool(types){ return CARDS.filter(c=>types.includes(c.type)); }
+
+/* ---------- 직업 데이터 (20종) — 후반 시대에서 사용 ---------- */
+const JOBS = [
+  {name:"의사",emoji:"🩺",tier:"pro",req:["intelligence","health"],baseSalary:80,difficulty:0.85,healthDrain:4},
+  {name:"변호사",emoji:"⚖️",tier:"pro",req:["intelligence","relationship"],baseSalary:75,difficulty:0.82},
+  {name:"대기업 직장인",emoji:"🏢",tier:"corp",req:["intelligence","relationship","luck"],baseSalary:55,difficulty:0.62},
+  {name:"공기업 직원",emoji:"🏛️",tier:"public",req:["intelligence","luck"],baseSalary:48,difficulty:0.55,stable:true},
+  {name:"공무원",emoji:"📋",tier:"public",req:["intelligence","health"],baseSalary:45,difficulty:0.55,stable:true},
+  {name:"개발자",emoji:"💻",tier:"corp",req:["intelligence","luck"],baseSalary:58,difficulty:0.6},
+  {name:"스타트업 창업가",emoji:"🚀",tier:"venture",req:["intelligence","luck","money"],baseSalary:0,difficulty:0.7,venture:true},
+  {name:"카페 사장",emoji:"☕",tier:"stable",req:["relationship","luck"],baseSalary:40,difficulty:0.5,freelance:true},
+  {name:"프리랜서 디자이너",emoji:"🎨",tier:"art",req:["charm","intelligence"],baseSalary:0,difficulty:0.52,freelance:true},
+  {name:"화가",emoji:"🖼️",tier:"art",req:["charm","luck"],baseSalary:0,difficulty:0.55,freelance:true,lateBloom:true},
+  {name:"가수",emoji:"🎤",tier:"art",req:["charm","health","luck"],baseSalary:0,difficulty:0.72,freelance:true},
+  {name:"아이돌",emoji:"🌟",tier:"art",req:["charm","health","luck"],baseSalary:0,difficulty:0.8,freelance:true},
+  {name:"아이돌 연습생",emoji:"🎙️",tier:"art",req:["charm","health"],baseSalary:15,difficulty:0.5},
+  {name:"배우",emoji:"🎭",tier:"art",req:["charm","luck"],baseSalary:0,difficulty:0.74,freelance:true},
+  {name:"크리에이터",emoji:"🎬",tier:"art",req:["charm","intelligence","luck"],baseSalary:0,difficulty:0.58,freelance:true},
+  {name:"웹툰 작가",emoji:"✍️",tier:"art",req:["intelligence","charm","luck"],baseSalary:0,difficulty:0.6,freelance:true},
+  {name:"교사",emoji:"🍎",tier:"public",req:["intelligence","relationship"],baseSalary:46,difficulty:0.55,stable:true},
+  {name:"간호사",emoji:"🏥",tier:"stable",req:["health","relationship"],baseSalary:50,difficulty:0.56},
+  {name:"운동선수",emoji:"🏅",tier:"venture",req:["health","luck"],baseSalary:0,difficulty:0.7,freelance:true},
+  {name:"투자자",emoji:"📈",tier:"venture",req:["intelligence","luck"],baseSalary:0,difficulty:0.66,venture:true},
+  /* 첫 직장(entry): 지원한 곳에 떨어졌을 때 눈을 낮춰 가는 자리. 시대(티어)마다 하나씩 —
+     예전엔 불합격하면 누구나 카페 사장이 되어 8판 16명 중 8명이 카페 사장이었다. */
+  {name:"중소기업 사원",emoji:"🏬",tier:"corp",req:["intelligence","relationship"],baseSalary:42,difficulty:0.45,entry:true},
+  {name:"학원 강사",emoji:"📚",tier:"public",req:["intelligence","charm"],baseSalary:38,difficulty:0.45,entry:true},
+  {name:"스타트업 직원",emoji:"🧑‍💻",tier:"venture",req:["intelligence","luck"],baseSalary:40,difficulty:0.46,entry:true},
+  {name:"웹툰 어시스턴트",emoji:"🖌️",tier:"art",req:["charm","intelligence"],baseSalary:28,difficulty:0.44,entry:true},
+  {name:"편의점 점장",emoji:"🏪",tier:"stable",req:["health","relationship"],baseSalary:36,difficulty:0.44,entry:true}
+];
+/* 불합격 → 눈을 낮춘 자리. 지원한 길(티어)과 가까울수록, 내 능력치에 맞을수록 뽑히기 쉽다. */
+function fallbackJob(p, failed){
+  const tier=failed&&failed.tier;
+  const fit=j=>(typeof jobFitScore==="function"&&p&&p.stats)?jobFitScore(p,j):50;
+  const pool=JOBS.filter(j=>j.baseSalary>0 && j.difficulty<=0.56 && j.name!=="아이돌 연습생" && (!failed||j.name!==failed.name));
+  let best=null, bs=-1e9;
+  pool.forEach(j=>{ const s=fit(j)*0.6 + (j.tier===tier?18:0) + (j.entry?6:0) + Math.random()*14; if(s>bs){ bs=s; best=j; } });
+  return best;
+}
+
+/* ---------- 공통 유틸 ---------- */
+function rnd(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function pick(arr){ return arr[rnd(0,arr.length-1)]; }
+function clampStat(v){ return Math.max(0,Math.min(100,v)); }
+function clampMoney(v){ return Math.max(-9999,Math.min(99999,v)); }
+
+/* 이미지 fallback 헬퍼: 경로 + 이모티콘 */
+function imgTag(src, fb, style){
+  const st = style? ` style="${style}"` : "";
+  return `<img src="${src}" alt=""${st} onerror="this.replaceWith(document.createTextNode('${fb}'))">`;
+}
+
+/* 돈 라벨 변환: 시대에 따라 표현이 달라짐 (유년기~고교는 '소지금/용돈') */
+function moneyLabel(stageKey){
+  const early = ["child","elementary","middle","high"];
+  return early.includes(stageKey) ? "소지금" : "자산";
+}
+function showMoneyPanel(stageKey){
+  // 유년기~중학생은 돈 패널 숨김, 고등학생부터 소지금 노출
+  return !["child","elementary","middle"].includes(stageKey);
+}
+
+/* 능력치 적용 (delta 객체) → 적용된 변화 반환 */
+function applyStat(p, eff){
+  const applied={};
+  // 캐릭터 패시브를 여기서 실제로 적용한다 (설명만 있고 안 먹던 것들)
+  var _ch=(typeof getChar==="function")?getChar(p):null; var ps=(_ch&&_ch.passive)||{};
+  for(const k in eff){
+    var v=eff[k];
+    if(k==="money"){
+      if(v>=50 && ps.winBonus) v+=ps.winBonus;                 // 대박 보상 증가
+      if(v<=-50 && ps.loseExtra) v-=ps.loseExtra;              // 큰 손실 가중
+      if(v<0 && ps.crisisReduce) v=Math.round(v*(1-ps.crisisReduce)); // 위기 피해 감소
+      const b=p.money||0; p.money=clampMoney(b+v); applied.money=p.money-b;
+    } else {
+      if(k==="health" && v>0 && ps.healHeal) v=Math.round(v*ps.healHeal);   // 회복 강화
+      if(v<0 && ps.crisisReduce) v=Math.round(v*(1-ps.crisisReduce));
+      const b=p.stats[k]; p.stats[k]=clampStat(b+v); applied[k]=p.stats[k]-b;
+    }
+  }
+  return applied;
+}
+
+/* 감각 문구 변환 (확률/호감도 숫자 숨김) */
+function chanceFeel(pr){
+  if(pr>=0.72) return "가능성이 높아 보인다";
+  if(pr>=0.55) return "도전해볼 만하다";
+  if(pr>=0.4)  return "운이 따라줘야 한다";
+  if(pr>=0.25) return "쉽지 않아 보인다";
+  return "기적이 필요해 보인다";
+}
+function affinityFeel(v){
+  if(v>=75) return "마음이 가까워진 느낌이다";
+  if(v>=58) return "오늘 분위기가 꽤 좋았다";
+  if(v>=42) return "상대가 편안해진 것 같다";
+  if(v>=26) return "아직은 조금 어색하다";
+  return "묘하게 거리감이 있다";
+}
+
+/* ---------- 타이밍 입력 (공통) ---------- */
+const TVERDICT = {
+  perfect:{bonus:0.15,label:"완벽!",color:"#1f9b78",feel:"기적이 일어날 것 같다 ✨"},
+  good:   {bonus:0.08,label:"좋음!",color:"#8FD43A",feel:"감이 좋다 👍"},
+  ok:     {bonus:0.0, label:"애매", color:"#c98a00",feel:"그럭저럭… 🤔"},
+  miss:   {bonus:-0.10,label:"삐끗!",color:"#e0476b",feel:"조금 불안하다 😣"}
+};
+function runTiming(opts, cb){
+  opts=opts||{};
+  const ov=document.getElementById("timingOverlay");
+  const marker=document.getElementById("gMarker"), pz=document.getElementById("gzPerfect"), gz=document.getElementById("gzGood");
+  const feel=document.getElementById("gFeel"), verd=document.getElementById("tVerdict"), hold=document.getElementById("holdBtn");
+  document.getElementById("tmType").textContent=(opts.icon||"🎯")+" "+(opts.kind||"타이밍");
+  document.getElementById("tmType").style.background=opts.accent||"var(--coral)";
+  document.getElementById("tmTitle").textContent=opts.title||"타이밍을 잡아라!";
+  document.getElementById("tmDesc").innerHTML=opts.desc||"버튼을 꾹 눌렀다가 <b>좋은 순간</b>에 손을 떼세요.";
+  verd.textContent=""; feel.textContent="대기 중…"; hold.textContent=opts.holdLabel||"🎯 꾹 누르기"; hold.style.display="";
+  const pc=rnd(38,62), pHalf=7, gHalf=17;
+  pz.style.left=(pc-pHalf)+"%"; pz.style.width=(pHalf*2)+"%";
+  gz.style.left=(pc-gHalf)+"%"; gz.style.width=(gHalf*2)+"%";
+  ov.classList.add("on");
+  let pos=0,dir=1,anim=null,holding=false,settled=false;
+  const speed=opts.speed||2.2;
+  function stepFn(){ pos+=dir*speed; if(pos>=100){pos=100;dir=-1;} if(pos<=0){pos=0;dir=1;}
+    marker.style.left=pos+"%"; const d=Math.abs(pos-pc);
+    feel.textContent=d<=pHalf?"지금이야! 🔥":d<=gHalf?"거의 다 왔다…":"타이밍을 노려라"; anim=requestAnimationFrame(stepFn); }
+  function judge(){ if(settled)return; settled=true; cancelAnimationFrame(anim); hold.classList.remove("holding");
+    const d=Math.abs(pos-pc); let key=d<=pHalf?"perfect":d<=gHalf?"good":(d<=gHalf+18?"ok":"miss");
+    const v=TVERDICT[key]; verd.textContent=v.label; verd.style.color=v.color; feel.textContent=v.feel; hold.style.display="none";
+    cleanup(); setTimeout(()=>{ ov.classList.remove("on"); cb({key,bonus:v.bonus,label:v.label}); },700); }
+  function down(e){ if(holding||settled)return; e.preventDefault(); holding=true; hold.classList.add("holding"); pos=0;dir=1; stepFn(); }
+  function up(e){ if(!holding||settled)return; e.preventDefault(); holding=false; judge(); }
+  function cleanup(){ hold.removeEventListener("mousedown",down); hold.removeEventListener("mouseup",up); hold.removeEventListener("mouseleave",up);
+    hold.removeEventListener("touchstart",down); hold.removeEventListener("touchend",up); }
+  if(opts.auto){
+    hold.style.display="none"; feel.textContent="타이밍을 재는 중…"; stepFn();
+    const skill=opts.aiSkill!==undefined?opts.aiSkill:0.5;
+    setTimeout(()=>{ const r=Math.random(); let t; if(r<skill*0.4)t="perfect"; else if(r<skill*0.4+0.35)t="good"; else if(r<skill*0.4+0.65)t="ok"; else t="miss";
+      if(t==="perfect")pos=pc+rnd(-pHalf,pHalf); else if(t==="good")pos=pc+(Math.random()<.5?-1:1)*rnd(pHalf+1,gHalf);
+      else if(t==="ok")pos=pc+(Math.random()<.5?-1:1)*rnd(gHalf+1,gHalf+18); else pos=pc+(Math.random()<.5?-1:1)*rnd(gHalf+19,gHalf+34);
+      pos=Math.max(0,Math.min(100,pos)); marker.style.left=pos+"%"; judge(); }, rnd(700,1400));
+    return;
+  }
+  hold.addEventListener("mousedown",down); hold.addEventListener("mouseup",up); hold.addEventListener("mouseleave",up);
+  hold.addEventListener("touchstart",down,{passive:false}); hold.addEventListener("touchend",up,{passive:false});
+}
+function aiTimingSkill(p){ const b={stable:0.5,challenger:0.62,romantic:0.5,tycoon:0.6,grinder:0.66,artist:0.55,idol:0.58}[p.aiTrait]||0.5;
+  return Math.max(0.3,Math.min(0.85, b+((p.stats.luck||50)-50)/200)); }
+
+/* ---------- 카드뽑기 (공통) ---------- */
+/* pool: 후보 카드 배열, count: 표시 장수, onResult(card) 콜백 */
+function drawCards(pool, count, onResult){
+  const modal=document.getElementById("modal");
+  const choices=[]; const used=new Set();
+  while(choices.length<count && choices.length<pool.length){ const c=pick(pool); if(!used.has(c.id)){ used.add(c.id); choices.push(c);} }
+  const cardsHTML = choices.map((c,i)=>`
+    <div class="card ${c.rarity==='rare'?'rare':''}" id="card${i}" onclick="window._flipCard(${i})">
+      <div class="face2 back">🎴<small>탭하여 뽑기</small></div>
+      <div class="face2 front">
+        <div class="c-emoji">${c.emoji}</div>
+        <div class="c-name">${c.name}</div>
+        <div class="c-eff">${c.desc}</div>
+      </div>
+    </div>`).join("");
+  modal.innerHTML = `
+    <span class="m-type" style="background:linear-gradient(90deg,var(--purple),var(--blue))">🎴 카드뽑기</span>
+    <h2>마음이 끌리는 카드를 골라보세요</h2>
+    <p class="m-desc">카드 한 장이 아이의 재능과 성격을 바꿉니다.</p>
+    <div class="card-row">${cardsHTML}</div>
+    <div id="cardResult"></div>`;
+  document.getElementById("modalOverlay").classList.add("on");
+  let picked=false;
+  window._flipCard=(i)=>{
+    if(picked) return; picked=true;
+    const card=choices[i];
+    document.querySelectorAll(".card").forEach((el,idx)=>{ if(idx!==i) el.classList.add("dim"); });
+    document.getElementById("card"+i).classList.add("flip");
+    setTimeout(()=>{
+      const res=document.getElementById("cardResult");
+      res.innerHTML = `<p class="m-desc" style="margin-top:6px"><b>${card.emoji} ${card.name}</b> 카드를 얻었다!<br>${card.desc}</p>
+        <button class="btn btn-primary" onclick="window._closeCard()">계속하기</button>`;
+      if(card.rarity==="rare") celebrate(["✨","🎴","⭐","💫"]);
+    }, 650);
+  };
+  window._closeCard=()=>{
+    document.getElementById("modalOverlay").classList.remove("on");
+    const chosen = choices.find((c,i)=>document.getElementById("card"+i)?.classList.contains("flip")) || choices[0];
+    onResult(chosen);
+  };
+}
+/* 상대 자동 카드뽑기 */
+function aiDrawCard(pool){ return pick(pool); }
+
+/* 카드 효과 적용 (두 플레이어 공통) */
+function applyCard(p, card){
+  const applied = applyStat(p, card.effect||{});
+  if(card.flag){ p.eventFlags = p.eventFlags||{}; p.eventFlags[card.flag]=true; }
+  p.cardHistory = p.cardHistory||[];
+  p.cardHistory.push({id:card.id, name:card.name, stage:GS.currentStage});
+  return applied;
+}
+
+/* ============================================================================
+   ★ 사용 아이템 인벤토리 (공통) ★ — 뽑아서 가방에 모아뒀다 내 차례에 원할 때 쓴다.
+   ============================================================================ */
+const ITEMS = {
+  coupon:    { emoji:"🎟️", name:"매점 쿠폰",   rarity:"common", desc:"쓰는 즉시 자산이 늘어나요.", use:function(p){ p.money=clampMoney((p.money||0)+80); return "자산 +80"; } },
+  letter:    { emoji:"🍀", name:"행운의 편지", rarity:"common", desc:"쓰면 운이 크게 올라요.", use:function(p){ const a=applyStat(p,{luck:8}); return "운 +"+(a.luck||8); } },
+  queenbee:  { emoji:"👑", name:"여왕벌",       rarity:"rare",   desc:"3라운드 동안 이성에게 인기 폭발! 호감 상승 1.5배, 고백·청혼 성공률↑.", use:function(p){ p.queenBeeRounds=(p.queenBeeRounds||0)+3; return "여왕벌 발동! (3라운드)"; } },
+  shield:    { emoji:"🛡️", name:"이혼 방어막", rarity:"rare",   desc:"성인기 이혼 위기를 한 번 막아줘요.", use:function(p){ p.divorceShield=true; return "이혼 방어막을 장착했어요"; } },
+  jobnet:    { emoji:"🔁", name:"이직 안전망", rarity:"common", desc:"이직 실패로 인한 경력 리셋을 한 번 막아요.", use:function(p){ p.jobSafety=true; return "이직 안전망을 준비했어요"; } },
+  reconfess: { emoji:"💌", name:"고백 재도전", rarity:"common", desc:"고백에 실패해도 한 번 더 도전할 수 있어요.", use:function(p){ p.confessRetry=true; return "고백 재도전을 준비했어요"; } }
+};
+const ITEM_IDS = Object.keys(ITEMS);
+function giveItem(p, id){ if(!ITEMS[id])return; p.items=p.items||[]; p.items.push(id); if(p===userP()) renderBag(); }
+function randomItemId(){ return ITEMS[pick(ITEM_IDS)] ? pick(ITEM_IDS) : "coupon"; }
+
+/* 화면에 항상 떠 있는 🎒 가방 버튼 (renderRival이 자주 호출 → 여기서 보장) */
+function ensureBag(){
+  if(document.getElementById("bagBtn")) return;
+  const b=document.createElement("button"); b.id="bagBtn"; b.className="bag-btn"; b.title="가방 — 아이템 사용";
+  b.innerHTML=`🎒<span class="bag-badge" id="bagBadge">0</span>`;
+  b.onclick=openBag; document.body.appendChild(b);
+  const ov=document.createElement("div"); ov.className="overlay"; ov.id="bagOverlay"; ov.innerHTML=`<div class="modal" id="bagModal"></div>`;
+  ov.onclick=function(e){ if(e.target===ov) ov.classList.remove("on"); };
+  document.body.appendChild(ov);
+}
+function renderBag(){
+  ensureBag();
+  const u=userP(); const n=(u&&u.items?u.items.length:0);
+  const badge=document.getElementById("bagBadge"); if(badge){ badge.textContent=n; badge.style.display=n?"grid":"none"; }
+  const btn=document.getElementById("bagBtn"); if(btn) btn.classList.toggle("has", n>0);
+}
+/* 호감인 수첩용 헬퍼 */
+function affHearts(v){ v=Math.max(0,Math.min(100,v||0)); const f=Math.round(v/20); return "❤️".repeat(f)+"🤍".repeat(5-f); }
+function knownCrushes(u){ const ids=Object.keys(u.affinity||{}); if(u.currentPartnerId && ids.indexOf(u.currentPartnerId)<0) ids.push(u.currentPartnerId); return ids.map(function(id){return LOVE_NPCS.find(function(n){return n.id===id;});}).filter(Boolean); }
+function saveCrushMemo(id,val){ const u=userP(); u.crushMemo=u.crushMemo||{}; u.crushMemo[id]=val; savePlayers(); }
+function crushBagHTML(u){
+  const list=knownCrushes(u);
+  if(!list.length) return `<div class="bag-empty">아직 마음이 가는 친구가 없어요.<br>💗 연애 칸에서 만나 보세요.</div>`;
+  const myTurn = (typeof curP!=="function") || curP()===u;
+  return list.map(function(n){
+    const aff=(u.affinity&&u.affinity[n.id])||0;
+    const memo=(u.crushMemo&&u.crushMemo[n.id])||"";
+    const cur = u.currentPartnerId===n.id ? `<span style="color:var(--romance);font-weight:900">· 지금 마음</span>` : "";
+    const confBtn = myTurn ? `<button class="btn" onclick="bagConfess('${n.id}')" style="margin-top:7px;width:100%;background:var(--romance);color:#fff;font-weight:900">💗 고백하기</button>` : `<div style="margin-top:7px;text-align:center;font-size:11px;color:var(--muted)">내 주사위 차례에 고백할 수 있어요</div>`;
+    return `<div style="background:var(--sunk);border-radius:12px;padding:11px;margin-bottom:9px;text-align:left">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div style="width:42px;height:42px;border-radius:9px;overflow:hidden;background:#fff;flex:0 0 auto">${imgTag(n.icon||n.middle,n.baseFallback||"🙂","width:100%;height:100%;object-fit:cover")}</div>
+        <div style="flex:1"><b>${n.name}</b> ${cur}<br><span style="font-size:15px">${affHearts(aff)}</span> <small style="color:var(--muted)">호감도 ${Math.round(aff)}</small></div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin:7px 0 5px">${((u.affinity&&u.affinity[n.id]>=50)||(u.crushKnown&&u.crushKnown[n.id]))?("💼 <b style=\"color:var(--ink)\">"+(n.secretJob||"?")+"</b> <span style=\"color:var(--pos);font-weight:800\">· 마음이 통해 알게 됐어요</span>"):("🔎 "+(n.hint||"아직 잘 모르겠어"))}</div>
+      <textarea placeholder="메모: 이 친구는 뭘 좋아할까?" onchange="saveCrushMemo('${n.id}',this.value)" style="width:100%;box-sizing:border-box;border:1px solid #e5e6ee;border-radius:8px;padding:7px;font-size:12px;resize:vertical;min-height:34px;font-family:inherit">${memo}</textarea>
+      ${confBtn}
+    </div>`;
+  }).join("");
+}
+/* 호감도 상승 큰 연출 */
+function showHeartBurst(name, gain){
+  if(!document.getElementById("heartpopKF")){ const st=document.createElement("style"); st.id="heartpopKF"; st.textContent="@keyframes heartpop{0%{opacity:0;transform:translate(-50%,-30%) scale(.6)}18%{opacity:1;transform:translate(-50%,-52%) scale(1.18)}70%{opacity:1;transform:translate(-50%,-58%) scale(1)}100%{opacity:0;transform:translate(-50%,-82%) scale(1)}}"; document.head.appendChild(st); }
+  const el=document.createElement("div");
+  el.style.cssText="position:fixed;left:50%;top:40%;z-index:2147483600;pointer-events:none;text-align:center;animation:heartpop 1.7s ease-out forwards";
+  el.innerHTML=`<div style="font-size:66px;filter:drop-shadow(0 4px 12px rgba(224,64,122,.4))">💗</div><div style="font-size:22px;font-weight:900;color:#e0407a;text-shadow:0 1px 0 #fff,0 2px 10px #fff">${name} 호감도 +${Math.round(gain)}%!</div>`;
+  document.body.appendChild(el); setTimeout(function(){el.remove();},1700);
+}
+/* 언제든 고백 (내 주사위 차례) — 같은 턴 2회째는 페널티 */
+function bagConfess(id){
+  const u=userP();
+  if(typeof curP==="function" && curP()!==u) return;
+  if(typeof busy!=="undefined" && busy) return;
+  const npc=LOVE_NPCS.find(function(n){return n.id===id;}); if(!npc) return;
+  document.getElementById("bagOverlay").classList.remove("on");
+  const aff=(u.affinity&&u.affinity[id])||0;
+  const turnKey=(typeof round!=="undefined"?round:0)*10+(typeof turnIdx!=="undefined"?turnIdx:0);
+  const penalty=(u._confessTurn===turnKey);
+  busy=true;
+  runTiming({icon:"💗",kind:"고백",accent:"var(--romance)",title:"고백의 순간!",desc:penalty?"오늘 벌써 다른 고백을 했어요… <b>진심이 흐려질</b>지도.":"꾹 눌렀다 <b>마음이 닿는 순간</b>에 떼세요.",holdLabel:"💗 마음을 전하기",speed:2.0}, function(v){
+    u._confessTurn=turnKey;
+    let prob=0.30+aff*0.006+((( (u.stats&&u.stats.charm)||50)-50)+(((u.stats&&u.stats.relationship)||50)-50)+(((u.stats&&u.stats.luck)||50)-50))*0.004+(v.bonus||0);
+    if(penalty) prob-=0.28;
+    if(typeof queenActive==="function" && queenActive(u)){ prob+=0.18; u.queenBeeRounds--; }
+    prob=Math.max(0.05,Math.min(0.95,prob));
+    const ok=Math.random()<prob;
+    u.affinity=u.affinity||{};
+    if(ok){
+      const before=u.affinity[id]||0; u.affinity[id]=Math.max(before,60);
+      u.currentPartnerId=id; u.hasPartner=true; u.confessionResult="성공";
+      if(typeof applyStat==="function") applyStat(u,{charm:2,relationship:2});
+      if(typeof celebrate==="function") celebrate(["💗","🎉","✨","💞"]);
+      showHeartBurst(npc.name, Math.max(1,u.affinity[id]-before));
+      log(`💞 <b>${u.name}</b> — ${npc.name}${jo(npc.name,"이가")} 내 마음을 받아줬어요!`,"u");
+    } else {
+      u.affinity[id]=Math.max(0,aff-10); u.confessionResult="실패";
+      if(typeof applyStat==="function") applyStat(u,{health:-3});
+      log(`💔 <b>${u.name}</b> — ${npc.name}에게 고백했지만 마음이 닿지 않았어요.`,"u");
+    }
+    if(typeof renderRival==="function") renderRival(); savePlayers();
+    busy=false;
+  });
+}
+function openBag(tab){
+  ensureBag();
+  window._bagTab = tab || window._bagTab || "items";
+  const u=userP(); const items=(u&&u.items)||[];
+  const itemList = items.length ? items.map(function(id,i){ const it=ITEMS[id]; return `<div class="bag-item ${it.rarity==='rare'?'rare':''}">
+      <div class="bi-emoji">${it.emoji}</div>
+      <div class="bi-info"><b>${it.name}</b><small>${it.desc}</small></div>
+      <button class="btn bi-use" onclick="useItem(${i})">사용</button>
+    </div>`; }).join("") : `<div class="bag-empty">아직 가방이 비었어요.<br>🎴 기회 카드나 길에서 아이템을 모아보세요.</div>`;
+  const onCrush = window._bagTab==="crush";
+  const tabBtns = `<div style="display:flex;gap:6px;margin-bottom:10px">
+    <button class="btn" style="flex:1;${onCrush?"background:var(--sunk);color:var(--ink-2)":"background:var(--main);color:#fff"}" onclick="openBag('items')">🎒 아이템</button>
+    <button class="btn" style="flex:1;${onCrush?"background:var(--romance);color:#fff":"background:var(--sunk);color:var(--ink-2)"}" onclick="openBag('crush')">💗 호감인</button>
+  </div>`;
+  const body = onCrush
+    ? `<p class="m-desc">호감도·힌트를 확인하고 메모해요.</p><div class="bag-list">${crushBagHTML(u)}</div>`
+    : `<p class="m-desc">내 차례에 원할 때 꺼내 쓸 수 있어요.</p><div class="bag-list">${itemList}</div>`;
+  document.getElementById("bagModal").innerHTML=`
+    <span class="m-type" style="background:linear-gradient(90deg,var(--purple),var(--pos))">🎒 내 가방</span>
+    <h2>${onCrush?"호감인 수첩":"아이템 사용"}</h2>
+    ${tabBtns}
+    ${body}
+    <button class="btn btn-primary" style="margin-top:12px;background:var(--sunk);color:var(--ink-2)" onclick="document.getElementById('bagOverlay').classList.remove('on')">닫기</button>`;
+  document.getElementById("bagOverlay").classList.add("on");
+}
+function useItem(i){
+  const u=userP(); if(!u.items||!u.items[i]) return;
+  const id=u.items[i]; const it=ITEMS[id];
+  const msg=it.use(u);
+  u.items.splice(i,1);
+  renderBag(); renderRival();
+  if(typeof celebrate==="function" && it.rarity==="rare") celebrate([it.emoji,"✨","💫"]);
+  log(`${it.emoji} <b>${u.name}</b> — ${it.name} 사용! <small>${msg}</small>`,"u");
+  openBag();   // 목록 갱신
+  // 방금 사용 피드백
+  const m=document.querySelector("#bagModal .m-desc"); if(m) m.innerHTML=`<b style="color:var(--pos)">${it.emoji} ${it.name} — ${msg}</b>`;
+}
+/* 여왕벌 호감 배율 — 활성 중이면 1.5배, 데이트할 때마다 1회씩 소모(3번). */
+function queenAff(p, aff){ if((p.queenBeeRounds||0)>0){ p.queenBeeRounds--; if(p===userP()) renderBag(); return Math.round(aff*1.5); } return aff; }
+function queenActive(p){ return (p.queenBeeRounds||0)>0; }
+
+/* ---------- 파티클 ---------- */
+function celebrate(emojis){
+  const party=document.getElementById("party"); party.style.display="block"; party.innerHTML="";
+  const set=emojis||["🎉","✨","⭐"];
+  for(let i=0;i<22;i++){ const c=document.createElement("div"); c.className="confetti"; c.textContent=pick(set);
+    c.style.left=rnd(0,100)+"%"; c.style.animationDelay=(Math.random()*0.4)+"s"; c.style.fontSize=rnd(16,28)+"px"; party.appendChild(c); }
+  setTimeout(()=>{ party.style.display="none"; party.innerHTML=""; },1800);
+}
+
+/* ---------- 저장 / 불러오기 / 이동 (공통) ---------- */
+function jo(w,pair){var s=String(w==null?'':w);var ch=s.charAt(s.length-1);if(!ch)return (pair==='으로')?'로':pair.charAt(1);var code=ch.charCodeAt(0);var isH=code>=0xAC00&&code<=0xD7A3;var jong=isH?(code-0xAC00)%28:-1;if(pair==='으로')return(jong>0&&jong!==8)?'으로':'로';if(pair==='와과')return jong>0?'과':'와';var m={'은는':['은','는'],'이가':['이','가'],'을를':['을','를']}[pair];if(!m)return '';if(!isH)return m[1];return jong>0?m[0]:m[1];}
+
+/* ── 호감 상대 정체성: 한국식 랜덤 이름 + 유추용 모호한 메모 ── */
+const KO_SUR=["김","이","박","최","정","강","조","윤","장","임","오","서","신","권","황","안","송","전","홍","문","양","손","배","백","유","남","심","노","하","곽"];
+const KO_GIV_M=["선호","도윤","시우","하준","지호","준우","예준","건우","현우","우진","서준","지훈","승민","윤호","재민","태윤","민석","성현","동하","규민"];
+const KO_GIV_F=["미호","서연","지우","하은","서윤","지민","수아","다은","예린","유나","채원","윤아","소율","가은","나윤","지아","하율","은서","시아","예나"];
+const NPC_HINTS={ love_m01:"동생들 챙기는 걸 좋아하더라", love_m02:"요즘 영상 찍는 데 푹 빠졌대", love_m03:"혼자 뭔가 뚝딱뚝딱 만드나 봐", love_m04:"쉬는 시간마다 운동장에 산대", love_f01:"누가 아프면 제일 먼저 달려가", love_f02:"노트가 온통 그림투성이더라", love_f03:"무대에 서는 걸 제일 좋아한대", love_f04:"말로는 아무도 못 이긴다던데" };
+function assignNpcNames(){
+  if(!GS.npcNames) GS.npcNames={};
+  if(LOVE_NPCS.some(function(n){return !GS.npcNames[n.id];})){
+    var used={}; Object.keys(GS.npcNames).forEach(function(k){used[GS.npcNames[k]]=1;});
+    LOVE_NPCS.forEach(function(n){ if(GS.npcNames[n.id])return; var g=n.gender==="male"?KO_GIV_M:KO_GIV_F; var f,t=0; do{f=pick(KO_SUR)+pick(g);t++;}while(used[f]&&t<40); used[f]=1; GS.npcNames[n.id]=f; });
+    saveGameState();
+  }
+  return GS.npcNames;
+}
+const NPC_JOBTYPE={"교사":"social","크리에이터":"star","개발자":"study","운동선수":"sport","간호사":"social","화가":"art","아이돌":"star","변호사":"study"};
+function applyNpcIdentity(){ var m=assignNpcNames(); LOVE_NPCS.forEach(function(n){ if(m[n.id]) n.name=m[n.id]; n.hint=NPC_HINTS[n.id]||"뭔가 비밀이 있는 것 같아"; n.type=NPC_JOBTYPE[n.secretJob]||"social"; }); }
+
+function loadPlayers(){ try{ return JSON.parse(localStorage.getItem("secondLife_players")); }catch(e){ return null; } }
+function loadGameState(){ try{ return JSON.parse(localStorage.getItem("secondLife_gameState"))||{}; }catch(e){ return {}; } }
+function savePlayers(){ try{ localStorage.setItem("secondLife_players", JSON.stringify(players)); }catch(e){} }
+function saveGameState(){ try{ localStorage.setItem("secondLife_gameState", JSON.stringify(GS)); }catch(e){} }
+function goNextStage(file){ savePlayers(); saveGameState(); location.href=file; }
+
+/* 신규 필드 보강 (이전 세션 호환) — 모든 시대 공통으로 안전하게 초기화 */
+function ensureFields(p){
+  if(p.money===undefined) p.money = p.stats&&p.stats.money!==undefined ? p.stats.money : 0;
+  if(p.stats && p.stats.money!==undefined) delete p.stats.money; // money는 최상위로 통일
+  const defaults={
+    characterPassive:null, education:null, desiredJob:null, jobTier:null, careerLevel:0,
+    careerHistory:[], jobRecommendationLog:[], romancePartner:null, romanceHistory:[], affinity:{},
+    currentPartnerId:null, pastRelationshipCount:0, breakupCount:0, romanceReputationRisk:0,
+    spouseId:null, spouseName:null, spouseJob:null, marriageHistory:[],
+    childEventUnlocked:false, childSupportHistory:[], childAllowanceTotal:0,
+    salary:0, totalSalaryEarned:0, totalBonusEarned:0, debt:0, debtLevel:0, loanSource:null,
+    loanInterest:0, debtFlags:[], houseHistory:[], cardHistory:[], eventFlags:{},
+    timingHistory:[], chapterSummaries:[], stagePerformance:{}, stageDone:{}, hasHouse:false,
+    hasPartner:false, isMarried:false, weddingGiftTotal:0, achievements:[], job:null, finished:false, finishOrder:null,
+    items:[], queenBeeRounds:0, divorceShield:false, jobSafety:false, confessRetry:false
+  };
+  for(const k in defaults){ if(p[k]===undefined) p[k]=defaults[k]; }
+}
+
+/* ============================================================================
+   ★ 청년기 전용 영역 (stage_youth.html 고유) ★
+   - 공통 블록(CHARACTERS/LOVE_NPCS/CARDS/JOBS/runTiming/applyStat 등) 재사용
+   - 선택 전 효과/수치/성공률 비공개. 선택 후에만 결과 공개.
+   - 유년기~고교에서 쌓인 eventFlags를 '재능'으로 환산해 이 시대부터 돈이 된다.
+   ============================================================================ */
+
+const STAGE_KEY = "youth";
+const STAGE_NEXT = "stage_adult.html";
+const TOTAL_ROUNDS = 15;      // 28칸 완주 보장 (주사위 평균 2.2칸)
+const FINISH_CELL = 27;       // 0~27 = 28칸
+
+const LIFE_TIMELINE = [
+  {key:"child",ico:"🍼",name:"유년기"},{key:"elementary",ico:"🎒",name:"초등"},
+  {key:"middle",ico:"🪞",name:"중학"},{key:"high",ico:"🏫",name:"고교"},
+  {key:"youth",ico:"🎓",name:"청년"},{key:"adult",ico:"💼",name:"성인"},
+  {key:"senior",ico:"🍂",name:"노년"},{key:"ending",ico:"🏆",name:"엔딩"}
+];
+
+/* 청년기 지도 18칸 */
+/* ── 보드 28칸 (8×8 테두리) ──
+   배치: 상단 8칸(0-7) → 우측 6칸(8-13) → 하단 8칸(14-21, 역방향) → 좌측 6칸(22-27, 역방향)
+   코너 = 0(졸업) · 7(첫 차) · 14(진로 갈림길) · 21(은행)
+   색 = 카테고리(6종 고정) · 아이콘 = 사건(칸마다 다름)
+   청년기 시대감: 🚗 첫 차 · ✈️ 여행 · 🏠 독립 · 💳 카드값 */
+const YOUTH_BOARD = [
+  /* 상단 (0-7) 왼→오 */
+  {type:"start",  ico:"🎓", name:"졸업"},        // 코너 1/1
+  {type:"career", ico:"💼", name:"취업 준비"},
+  {type:"life",   ico:"🏠", name:"독립"},
+  {type:"love",   ico:"💗", name:"첫 데이트"},
+  {type:"work",   ico:"🏢", name:"첫 출근"},
+  {type:"self",   ico:"📚", name:"자격증"},
+  {type:"rest",   ico:"☕", name:"카페"},
+  {type:"life",   ico:"🚗", name:"첫 차"},       // 코너 1/8
+  /* 우측 (8-13) 위→아래 */
+  {type:"work",   ico:"📊", name:"야근"},
+  {type:"card",   ico:"🎴", name:"기회카드"},
+  {type:"love",   ico:"💕", name:"연애"},
+  {type:"crisis", ico:"⚡", name:"번아웃"},
+  {type:"self",   ico:"🌱", name:"자기계발"},
+  {type:"life",   ico:"✈️", name:"여행"},
+  /* 하단 (14-21) 오→왼 */
+  {type:"branch", ico:"🔀", name:"진로 갈림길"}, // 코너 8/8
+  {type:"work",   ico:"💰", name:"성과급"},
+  {type:"rest",   ico:"🛋️", name:"주말"},
+  {type:"love",   ico:"💍", name:"프러포즈"},
+  {type:"self",   ico:"🎓", name:"대학원"},
+  {type:"life",   ico:"💳", name:"카드값"},
+  {type:"card",   ico:"🎴", name:"기회카드"},
+  {type:"life",   ico:"🏦", name:"은행"},        // 코너 8/1
+  /* 좌측 (22-27) 아래→위 */
+  {type:"rest",   ico:"🎮", name:"게임"},
+  {type:"love",   ico:"💔", name:"권태기"},
+  {type:"work",   ico:"🗣️", name:"면접"},
+  {type:"self",   ico:"📖", name:"스터디"},
+  {type:"crisis", ico:"🤒", name:"과로"},
+  {type:"finish", ico:"🏁", name:"서른"}         // 2/1 — 졸업 바로 아래
+];
+/* 칸 타입 → 카테고리 색. crisis는 이벤트(블루)에 흡수하고 아이콘(⚡/🤒)으로만 구분한다. */
+const CELL_CAT = {
+  self:"study",
+  work:"work", career:"work",
+  love:"love", marry:"love",
+  life:"event", card:"event", crisis:"event", luck:"event",
+  rest:"rest",
+  branch:"branch",
+  start:"start", finish:"finish"
+};
+const CORNER_CELLS = [0, 7, 14, 21];
+function cellClass(i){
+  const c=YOUTH_BOARD[i];
+  const cat=CELL_CAT[c.type]||"event";
+  const corner=CORNER_CELLS.includes(i)||c.type==="finish";
+  return `cat-${cat}${corner?" corner":""}`;
+}
+const CAT_TINT = {
+  study:"124,92,224", work:"217,164,23", love:"240,98,155",
+  event:"79,124,255", rest:"52,160,108", branch:"224,132,42",
+  start:"255,111,177", finish:"31,155,120"
+};
+function setSituation(type, ico){
+  const s=document.getElementById("stageBox"); if(!s) return;
+  const rgb=CAT_TINT[CELL_CAT[type]||"event"]||CAT_TINT.event;
+  s.style.setProperty("--situation", `linear-gradient(180deg, rgba(${rgb},.13), rgba(${rgb},.03) 55%, transparent 78%)`);
+  s.style.setProperty("--stage-main", `rgb(${rgb})`);
+  const el=document.getElementById("sceneIco");
+  if(el){ el.textContent = ico || (YOUTH_BOARD[curP().childPos]||{}).ico || ""; }
+}
+
+/* ── 재능: 유년기~고교의 eventFlags를 카테고리별로 집계 ──
+   flag는 불린이라 '몇 번 골랐나'는 알 수 없다. 대신 한 갈래에서 켜진
+   서로 다른 flag의 '비율'을 본다. 계속 한 우물을 판 사람일수록 높아진다. */
+const TALENT_CATEGORIES = {
+  art:   { name:"예술", emoji:"🎨", flags:["talentArt","likesDrawing","diary","artClub","smallAward"],
+           jobs:["화가","웹툰 작가","프리랜서 디자이너"] },
+  stage: { name:"무대", emoji:"🎤", flags:["talentSong","musicClub","talentStage","goodAtPresentation","confident"],
+           jobs:["가수","아이돌","배우","크리에이터","아이돌 연습생"] },
+  study: { name:"학업", emoji:"📚", flags:["readingHabit","homeworkHabit","studyRoutine","examFocus","scienceClub","diligent"],
+           jobs:["의사","변호사","개발자","교사","공무원","공기업 직원"] },
+  social:{ name:"사교", emoji:"🤝", flags:["manyFriends","goodFriend","teacherPraise","classPresident"],
+           jobs:["대기업 직장인","카페 사장","간호사"] },
+  body:  { name:"체력", emoji:"🏃", flags:["runningEnergy","luckyLunch"],
+           jobs:["운동선수","간호사"] }
+};
+const TALENT_STAR = ["", "★", "★★", "★★★"];
+const TALENT_SIDE = [0, 10, 25, 55];   // 청년기 부수입 (성인기에 더 커진다)
+
+function talentScore(p, key){
+  const cat=TALENT_CATEGORIES[key]; const f=p.eventFlags||{};
+  return cat.flags.filter(x=>f[x]).length / cat.flags.length;
+}
+function talentLevel(p, key){
+  // ★3은 한 우물을 깊게 판 사람만 (시뮬레이션에서 라이벌 8판 전원이 ★3이던 문제)
+  const s=talentScore(p,key), c=TALENT_CATEGORIES[key].flags.filter(x=>(p.eventFlags||{})[x]).length;
+  // 특화 vs 범용: 다른 재능도 60% 넘게 키운 범용형은 ★2가 상한 (설계서 §2 엔진 A의 대가)
+  const spread=Object.keys(TALENT_CATEGORIES).some(o=>o!==key && talentScore(p,o)>=0.6);
+  if(s>=0.75 && c>=3 && !spread) return 3;
+  if(s>=0.4 && c>=2) return 2;
+  if(c>=1) return 1;
+  return 0;
+}
+function topTalent(p){
+  let best=null, bv=0;
+  for(const k in TALENT_CATEGORIES){ const s=talentScore(p,k); if(s>bv){ bv=s; best=k; } }
+  return best;
+}
+function talentSideIncome(p){
+  const k=topTalent(p); if(!k) return 0;
+  let v=TALENT_SIDE[talentLevel(p,k)];
+  if(p.youthTrack==="talent") v=Math.round(v*1.6);   // 재능 트랙이면 부수입 강화
+  if(p.talentDemoted) v=Math.round(v*0.5);           // 갈등에서 꿈을 택하면 재능은 취미로
+  return v;
+}
+function talentLabel(p){
+  const k=topTalent(p); if(!k) return "아직 뚜렷한 재능은 없어요";
+  const c=TALENT_CATEGORIES[k], lv=talentLevel(p,k);
+  return `${c.emoji} ${c.name} ${TALENT_STAR[lv]}`;
+}
+function talentFeel(lv){
+  return ["아직 취미도 아니에요","취미 정도예요","특기라 부를 만해요","이건 재능이에요"][lv];
+}
+
+/* ── 청년기 경제 ── */
+const LIVING_COST   = 15;    // 라운드당 생활비
+const WEDDING_COST  = 300;   // 결혼식 비용
+const MARRY_MIN     = 60;    // 청혼 가능 최소 호감도
+const TWO_TIME_LINE = 50;    // 이 이상 호감도 2명 = 양다리
+
+function twoTimingCount(p){ return Object.values(p.affinity||{}).filter(v=>v>=TWO_TIME_LINE).length; }
+function marriageCandidates(p){
+  const out=[];
+  for(const id in (p.affinity||{})){
+    if(p.affinity[id]>=MARRY_MIN){
+      const npc=LOVE_NPCS.find(n=>n.id===id);
+      if(npc) out.push({npc:npc, aff:p.affinity[id]});
+    }
+  }
+  return out.sort((a,b)=>b.aff-a.aff);
+}
+function roundIncome(p){
+  var _rc=(typeof getChar==="function")?getChar(p):null; var _sb=(_rc&&_rc.passive&&_rc.passive.salaryBonus)||0;
+  const salary = p.job ? Math.round((p.job.baseSalary||0) * (1 + (p.careerLevel||0)*0.08)) + _sb : 0;
+  const side   = talentSideIncome(p);
+  return { salary:salary, side:side, cost:LIVING_COST, net:salary+side-LIVING_COST };
+}
+
+/* ── 진로 트랙 ── */
+const TRACKS = [
+  {key:"corp",    ai:"🏢", text:"취업 전선에 뛰어든다",   sub:"매달 들어오는 월급",       tiers:["corp","stable"]},
+  {key:"exam",    ai:"📋", text:"시험을 준비한다",       sub:"느리지만 단단한 길",       tiers:["public","pro"]},
+  {key:"talent",  ai:"🎨", text:"재능으로 승부한다",     sub:"쌓아온 것이 곧 무기",      tiers:["art"]},
+  {key:"venture", ai:"🚀", text:"창업에 도전한다",       sub:"크게 잃거나 크게 얻거나",  tiers:["venture"]}
+];
+
+function jobFitScore(p, job){
+  const s=p.stats; let sc=0;
+  job.req.forEach(k=>{ sc += (k==="money") ? Math.min(100,(p.money||0)/2) : (s[k]||0); });
+  sc = sc/job.req.length;
+  const t=topTalent(p);
+  if(t && TALENT_CATEGORIES[t].jobs.includes(job.name)) sc += 9*talentLevel(p,t);
+  if(p.highRoute==="study"  && ["pro","public","corp"].includes(job.tier)) sc += 6;
+  if(p.highRoute==="talent" && job.tier==="art") sc += 8;
+  if(p.highRoute==="partTime" && job.tier==="stable") sc += 5;
+  // 고교 진학 결과(education id)가 취업에 이어진다 — 예전엔 "명문대"/"4년제" 문자열을 찾느라 한 번도 적용되지 않았다
+  sc += ({elite:9, metro:6, local:4, college:3, art:(job.tier==="art"?8:0), retry:1, work:(job.tier==="stable"?4:0)})[p.education]||0;
+  const ch=getChar(p);
+  if(ch && ch.passive && ch.passive.goodTier && ch.passive.goodTier.includes(job.tier)) sc += 6;
+  return sc;
+}
+function jobChance(p, job){
+  const fit=jobFitScore(p,job);
+  let pr = 0.14 + (fit-45)*0.011 - (job.difficulty-0.5)*0.5;
+  var _jc=(typeof getChar==="function")?getChar(p):null;
+  if(_jc&&_jc.passive&&_jc.passive.jobBonus) pr += _jc.passive.jobBonus;
+  return Math.max(0.05, Math.min(0.92, pr));
+}
+function jobsForTrack(track){
+  const t=TRACKS.find(x=>x.key===track); if(!t) return JOBS.slice(0,3);
+  return JOBS.filter(j=>t.tiers.includes(j.tier));
+}
+
+/* ── 셀 장면 ── */
+/* ── 사건 = 칸, 변주 = 랜덤 ──
+   키는 보드 인덱스, 값은 그 칸 전용 씬 3개.
+   청년기는 돈이 처음으로 무게를 갖는 시대다 — 대부분의 선택에 money가 붙는다. */
+const CELL_EVENTS = {
+  /* ── 일 (옐로) ── */
+  1:[
+    {chip:"취업 준비", say:"졸업은 했는데 갈 곳이 없어요. 자소서 창만 켜져 있어요.", sub:"어떻게 할까요?", mood:"worried",
+      choices:[{text:"닥치는 대로 넣는다",ai:"📨",eff:{health:-3,luck:3},res:"서른 곳에 넣고 세 곳에서 연락이 왔어요."},
+               {text:"한 곳만 파고든다",ai:"🎯",eff:{intelligence:4,health:-2},flag:"focusedApply",res:"준비는 완벽한데 떨어지면 끝이에요."},
+               {text:"일단 알바부터",ai:"🍔",eff:{health:-2,charm:-1},money:40,res:"당장의 돈은 벌었어요."}]},
+    {chip:"자소서", say:"'성장 과정을 서술하시오'. 커서만 깜빡여요.", sub:"어떻게 쓸까요?",
+      choices:[{text:"솔직하게 쓴다",ai:"✍️",eff:{charm:4,intelligence:2},res:"진심이 읽혔어요."},
+               {text:"합격 자소서를 베낀다",ai:"📋",eff:{luck:-3,intelligence:1},res:"어디서 본 듯한 글이 됐어요."},
+               {text:"밤새 열 번 고친다",ai:"🌙",eff:{intelligence:5,health:-4},flag:"nightGrinder",res:"결국 첫 문장으로 돌아왔어요."}]},
+    {chip:"인적성", say:"인적성 시험장, 옆자리 사람이 너무 빨라요.", sub:"어떻게 할까요?", mood:"worried",
+      choices:[{text:"내 속도로 간다",ai:"🐢",eff:{intelligence:4,health:1},res:"정확도로 승부했어요."},
+               {text:"찍어서라도 채운다",ai:"🎲",eff:{luck:5,intelligence:-2},res:"운에 맡겼어요."},
+               {text:"포기하고 나온다",ai:"🚪",eff:{health:3,charm:-4},res:"발걸음이 무거웠어요."}]}
+  ],
+  4:[
+    {chip:"첫 출근", say:"첫 출근이에요. 엘리베이터에서 심장이 뛰어요.", sub:"어떻게 시작할까요?", mood:"worried",
+      choices:[{text:"먼저 인사하고 다닌다",ai:"🙋",eff:{relationship:5,charm:2,health:-1},res:"이름을 빨리 외웠어요."},
+               {text:"조용히 일만 배운다",ai:"📋",eff:{intelligence:5,relationship:-2},res:"실수 없이 첫날을 넘겼어요."},
+               {text:"모르는 걸 다 묻는다",ai:"❓",eff:{intelligence:4,relationship:2,charm:-2},res:"귀찮아하는 눈빛도 있었어요."}]},
+    {chip:"첫 회식", say:"부서 회식이에요. 다들 잔을 채워요.", sub:"어떻게 할까요?",
+      choices:[{text:"끝까지 남는다",ai:"🍻",eff:{relationship:6,health:-4},money:-20,res:"팀에 녹아들었어요."},
+               {text:"1차만 하고 간다",ai:"🚪",eff:{relationship:2,health:1},money:-15,res:"적당히 챙겼어요."},
+               {text:"컨디션 핑계로 빠진다",ai:"🤒",eff:{health:4,relationship:-4},res:"편했지만 다음 날 미묘했어요."}]},
+    {chip:"첫 실수", say:"보낸 메일에 오타가 있었어요. 전체 참조였어요.", sub:"어떻게 할까요?", mood:"burnout",
+      choices:[{text:"바로 정정 메일",ai:"⚡",eff:{intelligence:3,charm:2,health:-2},res:"빠른 수습이 오히려 점수를 땄어요."},
+               {text:"조용히 넘어간다",ai:"🤐",eff:{health:-3,luck:-2},res:"아무도 말은 안 했지만 다 봤어요."},
+               {text:"선배에게 먼저 알린다",ai:"🙇",eff:{relationship:4,intelligence:1,charm:-1},res:"같이 수습했어요."}]}
+  ],
+  8:[
+    {chip:"야근", say:"밤 열 시, 사무실에 나만 남았어요.", sub:"어떻게 할까요?", mood:"burnout",
+      choices:[{text:"끝내고 간다",ai:"📊",eff:{intelligence:4,health:-4},money:30,flag:"nightGrinder",res:"내일의 나를 구했어요."},
+               {text:"내일로 미룬다",ai:"🌙",eff:{health:4,intelligence:-2},res:"내일의 내가 울겠지만요."},
+               {text:"대충 마무리",ai:"✂️",eff:{health:1,charm:-3},money:15,res:"티가 났어요."}]},
+    {chip:"주말 출근", say:"토요일 아침, 팀장님 연락이 왔어요.", sub:"어떻게 할까요?", mood:"burnout",
+      choices:[{text:"나간다",ai:"🏢",eff:{health:-5,relationship:3},money:50,flag:"overworked",res:"주말이 사라졌어요."},
+               {text:"거절한다",ai:"🙅",eff:{health:5,relationship:-5},res:"경계를 그었어요."},
+               {text:"재택으로 처리",ai:"💻",eff:{health:-2,intelligence:2},money:25,res:"절충안을 찾았어요."}]},
+    {chip:"막차", say:"막차를 놓쳤어요. 택시는 4만 원이래요.", sub:"어떻게 할까요?",
+      choices:[{text:"택시를 탄다",ai:"🚕",eff:{health:2},money:-40,res:"몸은 편했지만 통장이 아파요."},
+               {text:"사무실에서 잔다",ai:"🛋️",eff:{health:-5,intelligence:2},res:"소파에서 눈만 붙였어요."},
+               {text:"걸어서 간다",ai:"🚶",eff:{health:-3,charm:1,luck:2},res:"새벽 도시를 처음 봤어요."}]}
+  ],
+  15:[
+    {chip:"성과급", say:"통장에 예상보다 큰 돈이 들어왔어요.", sub:"어떻게 쓸까요?", mood:"happy",
+      choices:[{text:"전부 저축",ai:"🏦",eff:{intelligence:2,charm:-2},money:120,flag:"saver",res:"숫자가 늘어나는 게 좋아요."},
+               {text:"나에게 선물",ai:"🎁",eff:{charm:5,health:2},money:40,res:"이러려고 일했죠."},
+               {text:"부모님께 드린다",ai:"🎀",eff:{relationship:6,charm:2},money:20,res:"처음으로 어른이 된 기분이에요."}]},
+    {chip:"연봉 협상", say:"연봉 협상 자리예요. 숫자를 불러야 해요.", sub:"어떻게 할까요?", mood:"worried",
+      choices:[{text:"세게 부른다",ai:"💪",eff:{charm:3,relationship:-3},money:90,res:"불편했지만 올랐어요."},
+               {text:"제시액을 받는다",ai:"🤝",eff:{relationship:3,charm:-1},money:40,res:"무난히 넘어갔어요."},
+               {text:"근거를 들고 간다",ai:"📊",eff:{intelligence:4,charm:2,health:-2},money:70,res:"준비한 만큼 받았어요."}]},
+    {chip:"승진", say:"승진 후보에 이름이 올랐대요.", sub:"어떻게 할까요?",
+      choices:[{text:"드러내놓고 어필",ai:"📣",eff:{charm:5,relationship:-3},money:60,res:"눈에 띄었어요."},
+               {text:"실적으로만 말한다",ai:"📈",eff:{intelligence:5,health:-3},money:60,res:"결과가 증명했어요."},
+               {text:"동료에게 양보",ai:"🫶",eff:{relationship:7,charm:2},money:0,res:"사람을 얻었어요."}]}
+  ],
+  24:[
+    {chip:"면접", say:"면접장이에요. '마지막으로 하고 싶은 말?'", sub:"어떻게 답할까요?", mood:"worried",
+      choices:[{text:"열정을 쏟는다",ai:"🔥",eff:{charm:5,health:-2},res:"진심이 전해졌어요."},
+               {text:"조건을 되묻는다",ai:"📋",eff:{intelligence:4,charm:-2},res:"당돌하다는 평을 받았어요."},
+               {text:"짧게 감사 인사",ai:"🙇",eff:{relationship:3,luck:2},res:"깔끔했어요."}]},
+    {chip:"압박 면접", say:"면접관이 계속 꼬리를 물고 파고들어요.", sub:"어떻게 버틸까요?", mood:"worried",
+      choices:[{text:"끝까지 논리로",ai:"🧠",eff:{intelligence:6,health:-3},res:"물러서지 않았어요."},
+               {text:"모르면 모른다고",ai:"🙂",eff:{charm:4,relationship:2},res:"솔직함이 통했어요."},
+               {text:"당황해서 얼어붙음",ai:"🧊",eff:{health:-4,charm:-3,luck:1},res:"머리가 하얘졌어요."}]},
+    {chip:"최종 발표", say:"합격 발표 날, 메일함을 못 열겠어요.", sub:"어떻게 할까요?", mood:"worried",
+      choices:[{text:"바로 확인한다",ai:"📬",eff:{health:-2,luck:3},res:"심장이 내려앉았다 올라왔어요."},
+               {text:"미루고 미룬다",ai:"⏳",eff:{health:-3,intelligence:1},res:"하루를 통째로 날렸어요."},
+               {text:"친구와 같이 본다",ai:"👥",eff:{relationship:5,health:1},res:"혼자가 아니어서 나았어요."}]}
+  ],
+  /* ── 자기계발 (퍼플) ── */
+  5:[
+    {chip:"자격증", say:"퇴근 후 자격증 공부를 시작했어요.", sub:"어떻게 할까요?",
+      choices:[{text:"독하게 3개월",ai:"📚",eff:{intelligence:6,health:-4,relationship:-2},flag:"certified",res:"한 번에 붙었어요."},
+               {text:"천천히 1년",ai:"🐢",eff:{intelligence:3,health:1},res:"오래 걸렸지만 지치지 않았어요."},
+               {text:"학원에 돈을 쓴다",ai:"🏫",eff:{intelligence:5,health:-1},money:-80,flag:"certified",res:"돈으로 시간을 샀어요."}]},
+    {chip:"영어", say:"승진에 토익 점수가 필요하대요.", sub:"어떻게 할까요?",
+      choices:[{text:"새벽반을 등록",ai:"🌅",eff:{intelligence:5,health:-3},money:-50,res:"잠을 갈아 넣었어요."},
+               {text:"출퇴근길 인강",ai:"🎧",eff:{intelligence:3,health:-1},money:-20,res:"지하철이 교실이 됐어요."},
+               {text:"미룬다",ai:"⏳",eff:{health:3,intelligence:-2},res:"내년의 나에게 맡겼어요."}]},
+    {chip:"사이드 프로젝트", say:"퇴근 후 뭔가 만들어보고 싶어졌어요.", sub:"어떻게 할까요?",
+      choices:[{text:"밤마다 만든다",ai:"💻",eff:{intelligence:5,charm:3,health:-5},flag:"sideProject",res:"내 것이 생겼어요."},
+               {text:"주말에만",ai:"📅",eff:{intelligence:3,health:-1},res:"느리지만 굴러가요."},
+               {text:"생각만 하다 만다",ai:"💭",eff:{health:2,charm:-2},res:"아이디어는 메모장에 남았어요."}]}
+  ],
+  12:[
+    {chip:"자기계발", say:"이대로 괜찮은 걸까, 문득 그런 생각이 들어요.", sub:"어떻게 할까요?", mood:"worried",
+      choices:[{text:"책을 읽는다",ai:"🌱",eff:{intelligence:4,health:1},money:-15,res:"답은 없었지만 질문이 선명해졌어요."},
+               {text:"사람을 만난다",ai:"☕",eff:{relationship:5,charm:2},money:-20,res:"다른 삶을 봤어요."},
+               {text:"그냥 일한다",ai:"🏢",eff:{intelligence:2,health:-2},money:20,res:"생각을 미뤘어요."}]},
+    {chip:"운동", say:"건강검진 결과지에 빨간 줄이 있어요.", sub:"어떻게 할까요?", mood:"worried",
+      choices:[{text:"PT를 끊는다",ai:"🏋️",eff:{health:6,charm:3},money:-100,flag:"runningEnergy",res:"몸이 달라지기 시작했어요."},
+               {text:"혼자 뛴다",ai:"🏃",eff:{health:4,intelligence:-1},res:"돈은 안 들었어요."},
+               {text:"무시한다",ai:"🙈",eff:{intelligence:2,health:-4},money:20,res:"몸이 계속 신호를 보내요."}]},
+    {chip:"취미", say:"일 말고 아무것도 없다는 걸 깨달았어요.", sub:"어떻게 할까요?",
+      choices:[{text:"악기를 배운다",ai:"🎸",eff:{charm:5,health:2,intelligence:-1},money:-60,flag:"talentSong",res:"손끝에 다른 세계가 열렸어요."},
+               {text:"그림을 그린다",ai:"🎨",eff:{charm:4,intelligence:2},money:-30,flag:"talentArt",res:"몰입하는 법을 다시 배웠어요."},
+               {text:"일이 취미라고 우긴다",ai:"💼",eff:{intelligence:3,health:-3,charm:-2},money:20,res:"주변이 걱정했어요."}]}
+  ],
+  18:[
+    {chip:"대학원", say:"대학원 원서 마감이 다가와요.", sub:"어떻게 할까요?", mood:"worried",
+      choices:[{text:"회사를 그만두고 간다",ai:"🎓",eff:{intelligence:7,relationship:-2},money:-200,flag:"gradSchool",res:"돌아올 다리를 태웠어요."},
+               {text:"야간으로 병행",ai:"🌙",eff:{intelligence:5,health:-5},money:-120,flag:"gradSchool",res:"둘 다 반쪽이 됐어요."},
+               {text:"포기한다",ai:"📦",eff:{health:3,intelligence:-2},money:30,res:"미련이 남았어요."}]},
+    {chip:"교수님", say:"지도교수가 논문을 다시 써오래요. 세 번째예요.", sub:"어떻게 할까요?", mood:"burnout",
+      choices:[{text:"다시 쓴다",ai:"✍️",eff:{intelligence:6,health:-5},res:"네 번째 만에 통과했어요."},
+               {text:"반박한다",ai:"💢",eff:{charm:3,relationship:-5,intelligence:2},res:"관계가 얼어붙었어요."},
+               {text:"조언을 구한다",ai:"🙇",eff:{intelligence:4,relationship:4,health:-2},flag:"mentor",res:"길이 보였어요."}]},
+    {chip:"학위", say:"학위를 땄어요. 그런데 통장은 비었어요.", sub:"어떻게 할까요?",
+      choices:[{text:"바로 취업 시장으로",ai:"💼",eff:{intelligence:2,health:-2},money:60,res:"현실로 돌아왔어요."},
+               {text:"연구를 이어간다",ai:"🔬",eff:{intelligence:6,charm:-2},money:-40,res:"좋아하는 걸 택했어요."},
+               {text:"학위를 무기로 협상",ai:"📈",eff:{charm:4,intelligence:2},money:100,res:"몸값이 올랐어요."}]}
+  ],
+  25:[
+    {chip:"스터디", say:"이직 스터디에 나가볼까 고민 중이에요.", sub:"어떻게 할까요?",
+      choices:[{text:"매주 나간다",ai:"📖",eff:{intelligence:5,relationship:4,health:-3},money:-20,res:"동료가 생겼어요."},
+               {text:"자료만 받는다",ai:"📥",eff:{intelligence:2,relationship:-2},res:"효율적이지만 외로워요."},
+               {text:"혼자 한다",ai:"🚪",eff:{intelligence:3,health:-1,relationship:-2},res:"내 페이스대로 갔어요."}]},
+    {chip:"코딩 테스트", say:"이직하려면 코테를 봐야 한대요.", sub:"어떻게 준비할까요?", mood:"worried",
+      choices:[{text:"매일 한 문제",ai:"⌨️",eff:{intelligence:5,health:-2},flag:"studyRoutine",res:"근육이 붙었어요."},
+               {text:"기출만 외운다",ai:"📋",eff:{intelligence:3,luck:2},res:"운에 기댔어요."},
+               {text:"안 보는 회사를 찾는다",ai:"🔍",eff:{intelligence:1,luck:3,charm:1},res:"다른 길도 있었어요."}]},
+    {chip:"모임 뒤풀이", say:"스터디 끝나고 다들 한잔하러 가재요.", sub:"어떻게 할까요?",
+      choices:[{text:"따라간다",ai:"🍻",eff:{relationship:6,health:-3},money:-25,res:"진짜 정보는 여기서 나왔어요."},
+               {text:"집에 간다",ai:"🏠",eff:{health:3,intelligence:2,relationship:-3},res:"내일이 편했어요."},
+               {text:"딱 한 잔만",ai:"🥂",eff:{relationship:3,health:-1},money:-12,res:"적당히 챙겼어요."}]}
+  ],
+  /* ── 이벤트 (블루) ── */
+  2:[
+    {chip:"독립", say:"짐을 싸서 처음으로 내 집을 구했어요.", sub:"어떤 집으로 갈까요?", mood:"happy",
+      choices:[{text:"회사 근처 비싼 곳",ai:"🏠",eff:{health:4,intelligence:2},money:-150,res:"출퇴근이 사라졌어요."},
+               {text:"싸고 먼 곳",ai:"🚇",eff:{health:-3},money:-50,res:"왕복 세 시간을 샀어요."},
+               {text:"부모님 집에 남는다",ai:"🏡",eff:{relationship:-2,health:2},money:60,res:"돈은 모이는데 마음이 눌려요."}]},
+    {chip:"자취방", say:"혼자 사는 첫 밤, 너무 조용해요.", sub:"어떻게 보낼까요?", mood:"sad",
+      choices:[{text:"친구를 부른다",ai:"🍕",eff:{relationship:5,health:1},money:-30,res:"집이 집 같아졌어요."},
+               {text:"혼자 익숙해진다",ai:"🌙",eff:{intelligence:3,health:2,relationship:-2},res:"고요가 편해졌어요."},
+               {text:"부모님께 전화",ai:"📞",eff:{relationship:4,health:2},res:"목소리를 오래 들었어요."}]},
+    {chip:"이사", say:"계약이 끝났어요. 집주인이 월세를 올린대요.", sub:"어떻게 할까요?", mood:"worried",
+      choices:[{text:"받아들인다",ai:"📝",eff:{health:1},money:-90,res:"이사비보단 싸다고 위로했어요."},
+               {text:"더 싼 곳으로 이사",ai:"📦",eff:{health:-4,intelligence:1},money:-40,res:"짐을 줄였어요."},
+               {text:"협상한다",ai:"🤝",eff:{charm:4,intelligence:2},money:-60,res:"절반만 올렸어요."}]}
+  ],
+  7:[
+    {chip:"첫 차", say:"중고차 사이트를 몇 달째 보고 있어요.", sub:"어떻게 할까요?", mood:"happy",
+      choices:[{text:"할부로 새 차",ai:"🚗",eff:{charm:6,health:2},money:-250,flag:"carLoan",res:"기분은 최고, 통장은 최악이에요."},
+               {text:"중고로 현금",ai:"🔧",eff:{charm:3,intelligence:2},money:-90,res:"실용적인 선택이었어요."},
+               {text:"안 산다",ai:"🚇",eff:{intelligence:3,charm:-2},money:60,res:"대중교통이 친구예요."}]},
+    {chip:"드라이브", say:"차를 뽑고 첫 주말이에요. 어디든 갈 수 있어요.", sub:"어디로 갈까요?", mood:"happy",
+      choices:[{text:"바다까지 달린다",ai:"🌊",eff:{health:4,charm:3,relationship:2},money:-40,res:"창문을 열고 소리를 질렀어요."},
+               {text:"부모님을 태운다",ai:"🎀",eff:{relationship:7,charm:2},money:-30,res:"뒷자리에서 자랑스러워하셨어요."},
+               {text:"주차장에 세워둔다",ai:"🅿️",eff:{intelligence:1,health:-1},money:-15,res:"보험료만 나갔어요."}]},
+    {chip:"접촉사고", say:"주차하다 옆 차를 긁었어요.", sub:"어떻게 할까요?", mood:"worried",
+      choices:[{text:"연락처를 남긴다",ai:"📝",eff:{charm:3,relationship:2},money:-70,res:"양심은 지켰어요."},
+               {text:"보험 처리",ai:"📞",eff:{intelligence:2,health:-1},money:-40,res:"할증이 붙었어요."},
+               {text:"모른 척 간다",ai:"🏃",eff:{luck:-5,health:-2},res:"CCTV가 있었어요."}]}
+  ],
+  11:[
+    {chip:"번아웃", say:"월요일 아침, 침대에서 몸이 안 일어나요.", sub:"어떻게 할까요?", mood:"burnout",
+      choices:[{text:"연차를 쓴다",ai:"🏖️",eff:{health:6,relationship:-1},money:-10,res:"하루가 사람을 살렸어요."},
+               {text:"버티고 나간다",ai:"⚡",eff:{intelligence:2,health:-5},money:25,res:"몸이 신호를 계속 보내요."},
+               {text:"퇴사를 검색한다",ai:"🔍",eff:{health:-2,charm:2,luck:2},res:"검색만 해도 숨이 쉬어져요."}]},
+    {chip:"공황", say:"출근길 지하철에서 숨이 안 쉬어졌어요.", sub:"어떻게 할까요?", mood:"burnout",
+      choices:[{text:"병원에 간다",ai:"🩺",eff:{health:5,intelligence:1},money:-50,res:"이름을 알게 되니 덜 무서웠어요."},
+               {text:"참고 출근한다",ai:"😶",eff:{health:-6,intelligence:1},money:25,res:"몸이 계속 비명을 질러요."},
+               {text:"아무에게도 말 안 함",ai:"🤐",eff:{health:-4,relationship:-3},res:"혼자 견뎠어요."}]},
+    {chip:"퇴사 충동", say:"사직서 양식을 다운받아 놓고 3주째예요.", sub:"어떻게 할까요?", mood:"burnout",
+      choices:[{text:"낸다",ai:"📄",eff:{health:6,charm:3},money:-60,flag:"quitJob",res:"후련하고 무서웠어요."},
+               {text:"이직처를 먼저 구한다",ai:"🔍",eff:{intelligence:4,health:-2},res:"현명하지만 오래 걸려요."},
+               {text:"지운다",ai:"🗑️",eff:{health:-3,intelligence:2},money:25,res:"또 미뤘어요."}]}
+  ],
+  13:[
+    {chip:"여행", say:"연차가 쌓였어요. 비행기표를 볼까요?", sub:"어떻게 할까요?", mood:"happy",
+      choices:[{text:"멀리 떠난다",ai:"✈️",eff:{health:5,charm:4,relationship:2},money:-180,flag:"traveler",res:"다른 사람이 되어 돌아왔어요."},
+               {text:"국내로 짧게",ai:"🚄",eff:{health:3,charm:1},money:-60,res:"이틀이 일주일 같았어요."},
+               {text:"연차를 팔고 일한다",ai:"💼",eff:{health:-3,intelligence:2},money:80,res:"돈은 남고 사람은 닳았어요."}]},
+    {chip:"공항", say:"게이트 앞이에요. 회사에서 전화가 와요.", sub:"어떻게 할까요?", mood:"worried",
+      choices:[{text:"안 받는다",ai:"📵",eff:{health:5,relationship:-4},res:"진짜 휴가가 시작됐어요."},
+               {text:"받고 처리한다",ai:"📞",eff:{relationship:3,health:-4},res:"휴가가 절반으로 줄었어요."},
+               {text:"동료에게 넘긴다",ai:"🤝",eff:{relationship:1,health:3,charm:1},res:"신세를 졌어요."}]},
+    {chip:"낯선 도시", say:"길을 잃었어요. 말도 안 통해요.", sub:"어떻게 할까요?",
+      choices:[{text:"헤매본다",ai:"🗺️",eff:{health:-2,charm:4,luck:3},res:"가이드북에 없는 곳을 찾았어요."},
+               {text:"현지인에게 묻는다",ai:"🗣️",eff:{relationship:4,charm:3},res:"손짓 발짓으로 통했어요."},
+               {text:"택시로 숙소 복귀",ai:"🚕",eff:{health:2,intelligence:1},money:-30,res:"안전하게 돌아왔어요."}]}
+  ],
+  19:[
+    {chip:"카드값", say:"카드 명세서가 왔어요. 숫자가 낯설어요.", sub:"어떻게 할까요?", mood:"worried",
+      choices:[{text:"일시불로 갚는다",ai:"💳",eff:{intelligence:3,health:-2},money:-120,res:"통장이 텅 비었지만 깔끔해요."},
+               {text:"할부로 돌린다",ai:"🔄",eff:{health:1,luck:-2},money:-40,flag:"debtSpiral",res:"다음 달의 나에게 넘겼어요."},
+               {text:"카드를 자른다",ai:"✂️",eff:{intelligence:4,charm:-2},money:-80,flag:"saver",res:"뿌리를 뽑았어요."}]},
+    {chip:"경조사", say:"이번 달에만 청첩장이 세 장이에요.", sub:"어떻게 할까요?", mood:"worried",
+      choices:[{text:"다 간다",ai:"🎊",eff:{relationship:6,health:-3},money:-150,res:"지갑은 얇아지고 인맥은 두꺼워졌어요."},
+               {text:"친한 곳만",ai:"🎯",eff:{relationship:2},money:-50,res:"선택과 집중이에요."},
+               {text:"봉투만 보낸다",ai:"✉️",eff:{relationship:-1,health:2},money:-40,res:"성의는 전했어요."}]},
+    {chip:"보험", say:"지인이 보험 하나 들어달래요.", sub:"어떻게 할까요?", mood:"worried",
+      choices:[{text:"들어준다",ai:"📄",eff:{relationship:4,charm:-1},money:-70,res:"관계를 돈으로 샀어요."},
+               {text:"거절한다",ai:"🙅",eff:{intelligence:3,relationship:-5},res:"관계가 어색해졌어요."},
+               {text:"따져보고 결정",ai:"🔍",eff:{intelligence:5,relationship:1},money:-30,res:"필요한 것만 골랐어요."}]}
+  ],
+  21:[
+    {chip:"은행", say:"적금 만기예요. 목돈이 손에 들어왔어요.", sub:"어떻게 할까요?", mood:"happy",
+      choices:[{text:"재투자",ai:"🏦",eff:{intelligence:3},money:100,flag:"saver",res:"눈덩이가 굴러가요."},
+               {text:"주식에 넣는다",ai:"📈",eff:{luck:4,intelligence:1},money:60,flag:"investor",res:"오를 수도 내릴 수도 있어요."},
+               {text:"쓴다",ai:"💸",eff:{charm:4,health:3},money:-20,res:"고생한 나에게 줬어요."}]},
+    {chip:"대출 상담", say:"전세 대출 상담을 받으러 왔어요.", sub:"어떻게 할까요?", mood:"worried",
+      choices:[{text:"최대한 빌린다",ai:"🏠",eff:{health:2,intelligence:-1},money:200,flag:"bigLoan",res:"집은 생겼고 빚도 생겼어요."},
+               {text:"감당 가능한 만큼",ai:"⚖️",eff:{intelligence:4},money:90,res:"잠은 잘 와요."},
+               {text:"월세로 버틴다",ai:"🔑",eff:{intelligence:2,health:-1},money:-40,res:"빚은 없지만 매달 나가요."}]},
+    {chip:"신용", say:"신용점수를 처음 확인해봤어요.", sub:"어떻게 할까요?",
+      choices:[{text:"관리를 시작한다",ai:"📊",eff:{intelligence:5,charm:-1},money:20,flag:"saver",res:"어른의 숫자를 배웠어요."},
+               {text:"무시한다",ai:"🙈",eff:{health:2,luck:-3},res:"나중에 발목을 잡을 거예요."},
+               {text:"전문가 상담",ai:"🗣️",eff:{intelligence:4,relationship:2},money:-30,res:"길이 정리됐어요."}]}
+  ],
+  26:[
+    {chip:"과로", say:"3주째 야근이에요. 손이 떨려요.", sub:"어떻게 할까요?", mood:"burnout",
+      choices:[{text:"병가를 낸다",ai:"🤒",eff:{health:6,relationship:-2},money:-30,res:"몸이 먼저라는 걸 배웠어요."},
+               {text:"영양제로 버틴다",ai:"💊",eff:{health:-3,intelligence:2},money:-40,res:"임시방편이에요."},
+               {text:"업무를 나눈다",ai:"🤝",eff:{relationship:4,health:3,charm:-2},res:"도와달라는 말이 제일 어려웠어요."}]},
+    {chip:"응급실", say:"새벽에 배가 아파서 응급실에 왔어요.", sub:"어떻게 할까요?", mood:"burnout",
+      choices:[{text:"입원한다",ai:"🏥",eff:{health:7,intelligence:-2},money:-150,res:"강제로 쉬게 됐어요."},
+               {text:"수액만 맞고 출근",ai:"💉",eff:{health:-2,intelligence:1},money:-40,res:"회사가 뭐라고요."},
+               {text:"부모님을 부른다",ai:"📞",eff:{relationship:6,health:4},money:-60,res:"울면서 오셨어요."}]},
+    {chip:"건강검진", say:"검진 결과에 '재검' 두 글자가 있어요.", sub:"어떻게 할까요?", mood:"worried",
+      choices:[{text:"바로 재검",ai:"🩺",eff:{health:5,intelligence:2},money:-80,res:"다행히 별일 아니었어요."},
+               {text:"미룬다",ai:"⏳",eff:{health:-5,luck:-2},money:20,res:"불안만 커졌어요."},
+               {text:"생활을 바꾼다",ai:"🥗",eff:{health:6,charm:2,intelligence:-1},money:-40,res:"이참에 다 뜯어고쳤어요."}]}
+  ],
+  /* ── 연애 (핑크) ── 단계는 칸이 정한다: 💗첫 데이트(3) → 💕연애(10) → 💍프러포즈(17) → 💔권태기(23) */
+  3:[
+    {chip:"첫 데이트", say:"소개로 만난 사람과 첫 약속이에요.", sub:"오늘은 어떻게 할까요?", mood:"happy",
+      choices:[{text:"정성껏 준비한다",ai:"🎀",aff:9,eff:{charm:4},money:-40,mood:"happy",res:"마음이 전해졌어요."},
+               {text:"편하게 만난다",ai:"🍜",aff:5,eff:{relationship:3},money:-12,mood:"normal",res:"익숙한 편안함이었어요."},
+               {text:"오늘은 일이 먼저",ai:"💼",aff:-6,eff:{intelligence:2},money:25,mood:"sad",res:"미안한 마음이 남았어요."}]},
+    {chip:"연락", say:"먼저 연락할지 말지 세 시간째 고민 중이에요.", sub:"어떻게 할까요?", mood:"worried",
+      choices:[{text:"먼저 보낸다",ai:"💬",aff:8,eff:{charm:3,health:-1},mood:"happy",res:"바로 답이 왔어요."},
+               {text:"기다린다",ai:"⏳",aff:1,eff:{intelligence:2,health:-2},mood:"worried",res:"하루가 길었어요."},
+               {text:"친구에게 물어본다",ai:"📞",aff:4,eff:{relationship:3,charm:1},mood:"normal",res:"조언대로 했어요."}]},
+    {chip:"두 번째 약속", say:"다음에 또 보자는 말이 진심인지 모르겠어요.", sub:"어떻게 할까요?",
+      choices:[{text:"날짜를 바로 잡는다",ai:"📅",aff:9,eff:{charm:3},mood:"happy",res:"진심이었어요."},
+               {text:"흘려보낸다",ai:"🍃",aff:-4,eff:{health:2,intelligence:1},mood:"sad",res:"그렇게 흐지부지됐어요."},
+               {text:"가볍게 떠본다",ai:"😏",aff:6,eff:{charm:2,luck:1},mood:"normal",res:"눈치껏 잘 넘어갔어요."}]}
+  ],
+  10:[
+    {chip:"연애", say:"조금 더 가까워질 수 있어요.", sub:"어디까지 다가갈까요?", mood:"happy",
+      choices:[{text:"진심을 말한다",ai:"💗",aff:11,eff:{charm:3,health:-2},mood:"happy",res:"용기를 냈어요."},
+               {text:"천천히 간다",ai:"🌙",aff:4,eff:{health:2},mood:"normal",res:"서두르지 않았어요."},
+               {text:"거리를 둔다",ai:"🚪",aff:-9,eff:{intelligence:3,health:3},mood:"sad",res:"마음을 접어뒀어요."}]},
+    {chip:"기념일", say:"100일이래요. 알고는 있었어요.", sub:"어떻게 할까요?", mood:"worried",
+      choices:[{text:"제대로 챙긴다",ai:"🎁",aff:10,eff:{charm:4},money:-70,mood:"happy",res:"오래 기억될 하루였어요."},
+               {text:"소박하게",ai:"🌷",aff:6,eff:{relationship:2},money:-20,mood:"happy",res:"마음이 중요하죠."},
+               {text:"까먹은 척한다",ai:"😅",aff:-8,eff:{luck:-2},mood:"sad",res:"분위기가 얼어붙었어요."}]},
+    {chip:"부모님 인사", say:"부모님을 뵙자는 이야기가 나왔어요.", sub:"어떻게 할까요?", mood:"worried",
+      choices:[{text:"바로 만난다",ai:"🏡",aff:10,eff:{relationship:4,health:-2},money:-50,mood:"happy",res:"관계가 한 단계 나아갔어요."},
+               {text:"조금 미룬다",ai:"⏳",aff:-3,eff:{intelligence:2},mood:"worried",res:"준비가 안 됐어요."},
+               {text:"내 부모님도 소개",ai:"🤝",aff:12,eff:{relationship:5,charm:2},money:-60,mood:"happy",res:"서로의 세계가 열렸어요."}]}
+  ],
+  17:[
+    {chip:"결혼 이야기", say:"주변에서 결혼 얘기가 들려와요.", sub:"당신은 어떻게 생각하나요?",
+      choices:[{text:"나도 준비해볼까",ai:"💍",aff:8,eff:{charm:3,relationship:4},flag:"marryMinded",mood:"happy",res:"마음이 기울었어요."},
+               {text:"아직은 일이 먼저",ai:"💼",eff:{intelligence:4,relationship:-3},money:30,mood:"normal",res:"지금은 나에게 집중해요."},
+               {text:"흘려듣는다",ai:"🍃",eff:{health:3,luck:2},mood:"normal",res:"남의 일 같았어요."}]},
+    {chip:"집 이야기", say:"결혼하려면 집부터라는 말을 들었어요.", sub:"어떻게 할까요?", mood:"worried",
+      choices:[{text:"대출을 알아본다",ai:"🏦",eff:{intelligence:3,health:-2},money:-40,flag:"marryMinded",res:"현실이 숫자로 보였어요."},
+               {text:"작게 시작하자고",ai:"🏠",aff:7,eff:{relationship:4,charm:2},mood:"happy",res:"둘 다 마음이 편해졌어요."},
+               {text:"결혼을 미룬다",ai:"⏳",aff:-6,eff:{intelligence:2},money:40,mood:"sad",res:"현실적이지만 씁쓸해요."}]},
+    {chip:"양가 상견례", say:"상견례 날짜를 잡자는 연락이 왔어요.", sub:"어떻게 할까요?", mood:"worried",
+      choices:[{text:"적극적으로 나선다",ai:"🤝",aff:9,eff:{charm:4,relationship:3,health:-2},money:-60,mood:"happy",res:"어른들이 흡족해했어요."},
+               {text:"상대에게 맡긴다",ai:"🙂",aff:-2,eff:{health:2},money:-30,mood:"normal",res:"편했지만 서운해했어요."},
+               {text:"조건을 따진다",ai:"📋",aff:-7,eff:{intelligence:4},money:20,mood:"worried",res:"분위기가 싸늘해졌어요."}]}
+  ],
+  23:[
+    {chip:"권태기", say:"만나도 할 말이 없어요. 폰만 봐요.", sub:"어떻게 할까요?", mood:"sad",
+      choices:[{text:"솔직하게 말한다",ai:"💬",aff:7,eff:{charm:3,relationship:2},mood:"normal",res:"둘 다 같은 마음이었어요."},
+               {text:"새로운 걸 해본다",ai:"🎡",aff:9,eff:{charm:2,health:2},money:-50,mood:"happy",res:"처음처럼 웃었어요."},
+               {text:"그냥 흘러간다",ai:"🍃",aff:-8,eff:{health:1,intelligence:1},mood:"sad",res:"조용히 멀어졌어요."}]},
+    {chip:"싸움", say:"사소한 일로 크게 부딪쳤어요.", sub:"어떻게 할까요?", mood:"sad",
+      choices:[{text:"먼저 사과한다",ai:"🙇",aff:8,eff:{charm:2,relationship:3},mood:"happy",res:"진심이 닿았어요."},
+               {text:"할 말은 한다",ai:"💢",aff:-6,eff:{intelligence:2,health:-2},mood:"worried",res:"이겼지만 잃었어요."},
+               {text:"시간을 갖자고",ai:"⏳",aff:-3,eff:{health:3,intelligence:2},mood:"sad",res:"각자 생각할 시간이 필요했어요."}]},
+    {chip:"이별 이야기", say:"'우리 왜 만나는 걸까' 라는 말을 들었어요.", sub:"어떻게 답할까요?", mood:"sad",
+      choices:[{text:"붙잡는다",ai:"🫂",aff:6,eff:{charm:2,health:-3},mood:"worried",res:"한 번 더 해보기로 했어요."},
+               {text:"놓아준다",ai:"👋",aff:-12,eff:{intelligence:4,health:2},flag:"brokeUp",mood:"sad",res:"울면서 헤어졌어요."},
+               {text:"화를 낸다",ai:"💢",aff:-10,eff:{charm:-3,health:-2},mood:"sad",res:"최악으로 끝났어요."}]}
+  ],
+  /* ── 휴식 (그린) ── */
+  6:[
+    {chip:"카페", say:"주말 오후, 창가 자리를 잡았어요.", sub:"어떻게 보낼까요?", mood:"normal",
+      choices:[{text:"책을 읽는다",ai:"📖",eff:{intelligence:4,health:2},money:-8,res:"오랜만에 문장이 들어왔어요."},
+               {text:"멍하니 밖을 본다",ai:"☕",eff:{health:5,intelligence:-1},money:-8,res:"아무것도 안 하는 게 좋았어요."},
+               {text:"노트북을 편다",ai:"💻",eff:{intelligence:3,health:-3},money:-8,res:"카페까지 와서 일이라니."}]},
+    {chip:"단골", say:"사장님이 이름을 기억해줬어요.", sub:"어떻게 할까요?", mood:"happy",
+      choices:[{text:"짧게 수다",ai:"🗣️",eff:{relationship:4,charm:2},money:-8,res:"동네에 아는 사람이 생겼어요."},
+               {text:"쿠폰을 채운다",ai:"🎫",eff:{luck:3,health:1},money:-8,res:"열 잔째는 공짜예요."},
+               {text:"조용히 인사만",ai:"🙂",eff:{health:2,intelligence:1},money:-8,res:"이 정도 거리가 편해요."}]},
+    {chip:"혼자", say:"약속이 취소됐어요. 하루가 통째로 비었어요.", sub:"어떻게 할까요?",
+      choices:[{text:"혼자 영화를 본다",ai:"🎬",eff:{health:3,charm:2},money:-15,res:"생각보다 좋았어요."},
+               {text:"집에서 잔다",ai:"😴",eff:{health:5,relationship:-2},res:"통잠을 잤어요."},
+               {text:"다른 친구를 부른다",ai:"📞",eff:{relationship:5,health:1},money:-25,res:"우연이 만든 하루였어요."}]}
+  ],
+  16:[
+    {chip:"주말", say:"이틀이 통째로 주어졌어요.", sub:"어떻게 쓸까요?", mood:"happy",
+      choices:[{text:"이틀 다 눕는다",ai:"🛋️",eff:{health:6,intelligence:-2,relationship:-2},res:"월요일이 조금 나았어요."},
+               {text:"밀린 일을 한다",ai:"💼",eff:{intelligence:4,health:-4},money:20,res:"주말이 사라졌어요."},
+               {text:"사람을 만난다",ai:"👥",eff:{relationship:5,charm:2,health:-1},money:-40,res:"충전됐어요."}]},
+    {chip:"청소", say:"집이 엉망이에요. 언제부터였는지 모르겠어요.", sub:"어떻게 할까요?", mood:"burnout",
+      choices:[{text:"싹 다 치운다",ai:"🧹",eff:{health:4,intelligence:2},res:"마음까지 정리됐어요."},
+               {text:"눈에 보이는 것만",ai:"🧽",eff:{health:2},res:"티는 났어요."},
+               {text:"내버려 둔다",ai:"📦",eff:{health:-3,intelligence:1},res:"다음 주의 나에게 미뤘어요."}]},
+    {chip:"배달", say:"세 끼 연속 배달을 시켰어요.", sub:"어떻게 할까요?",
+      choices:[{text:"오늘도 시킨다",ai:"🍗",eff:{health:-3,charm:-1},money:-25,res:"편한 대신 몸이 알아요."},
+               {text:"장을 보러 간다",ai:"🥬",eff:{health:4,intelligence:2},money:-30,res:"밥을 지어 먹었어요."},
+               {text:"굶는다",ai:"🚫",eff:{health:-4,intelligence:-1},money:10,res:"돈은 아꼈어요."}]}
+  ],
+  22:[
+    {chip:"게임", say:"퇴근하고 켠 게임이 새벽 3시까지 갔어요.", sub:"어떻게 할까요?", mood:"happy",
+      choices:[{text:"끝까지 한다",ai:"🎮",eff:{health:-4,relationship:3,intelligence:-2},res:"내일의 나를 팔았어요."},
+               {text:"정한 시간에 끈다",ai:"⏱️",eff:{health:3,intelligence:2},res:"어른의 절제예요."},
+               {text:"길드원과 밤샌다",ai:"👥",eff:{relationship:6,health:-5},res:"얼굴도 모르는 친구들이에요."}]},
+    {chip:"현질", say:"한정 스킨이 오늘까지래요.", sub:"어떻게 할까요?",
+      choices:[{text:"지른다",ai:"💳",eff:{charm:3,health:1},money:-50,res:"기분은 좋았어요."},
+               {text:"참는다",ai:"✋",eff:{intelligence:3,charm:-2},money:20,flag:"saver",res:"내일이면 잊을 거예요."},
+               {text:"친구에게 선물",ai:"🎁",eff:{relationship:5,charm:2},money:-60,res:"쓰는 김에 크게 썼어요."}]},
+    {chip:"복귀", say:"접었던 게임에 친구들이 돌아왔대요.", sub:"어떻게 할까요?", mood:"happy",
+      choices:[{text:"같이 복귀",ai:"🔄",eff:{relationship:6,health:-3,intelligence:-2},res:"그때 그 사람들이었어요."},
+               {text:"구경만 한다",ai:"👀",eff:{relationship:2,health:1},res:"추억으로 남겼어요."},
+               {text:"단칼에 거절",ai:"🚫",eff:{intelligence:4,relationship:-3},money:20,res:"시간을 지켰어요."}]}
+  ]
+};
+
+/* ── 상대 성향별 선택 가중치 (무작위 클릭 대신) ── */
+const TRAIT_WEIGHT = {
+  stable:     { intelligence:1.2, health:1.4, relationship:1.0, charm:0.8, money:1.1, aff:0.9 },
+  challenger: { intelligence:1.0, health:0.8, relationship:0.9, charm:1.2, money:1.5, aff:0.9 },
+  romantic:   { intelligence:0.8, health:1.0, relationship:1.6, charm:1.5, money:0.7, aff:2.0 },
+  tycoon:     { intelligence:1.3, health:0.7, relationship:0.8, charm:0.9, money:2.0, aff:0.5 },
+  grinder:    { intelligence:1.6, health:0.9, relationship:0.7, charm:0.8, money:1.2, aff:0.6 }
+};
+function aiChoiceIndex(p, choices){
+  const w = TRAIT_WEIGHT[p.aiTrait] || TRAIT_WEIGHT.stable;
+  const scored = choices.map((c,i)=>{
+    let s=0;
+    for(const k in (c.eff||{})) s += (c.eff[k]||0) * (w[k]||1) * (k==="money"?0.12:1);
+    if(c.aff) s += c.aff * (w.aff||1);
+    if(c.career) s += c.career * 6;
+    return {i:i, s:s + rnd(-2,2)};
+  }).sort((a,b)=>b.s-a.s);
+  // 20%는 2순위 — 완전히 읽히지 않도록
+  return (scored.length>1 && Math.random()<0.2) ? scored[1].i : scored[0].i;
+}
+
+/* ── 공통 보드 UI (유아~고등과 동일) ── */
+const STAT_ICO = {
+  intelligence:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4a2 2 0 0 1 2-2h12v20H7a2 2 0 0 1-2-2z"/><path d="M9 2v20"/></svg>',
+  charm:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/></svg>',
+  health:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-9a3.8 3.8 0 0 1 7-2.5A3.8 3.8 0 0 1 19 11c0 4.6-7 9-7 9z"/></svg>',
+  relationship:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16.5 5.4a3 3 0 0 1 0 5.2"/><path d="M18.5 20a6 6 0 0 0-2.6-4.9"/></svg>',
+  luck:        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="3.1"/><circle cx="15" cy="9" r="3.1"/><circle cx="9" cy="15" r="3.1"/><circle cx="15" cy="15" r="3.1"/></svg>'
+};
+function toggleLog(){
+  const el=document.getElementById("log"), b=document.getElementById("logToggle");
+  const open=el.classList.toggle("open");
+  b.textContent = open ? "기록 ▴" : "기록 ▾";
+}
+function flashMini(p,applied){ for(const k in applied){ if(!applied[k])continue; const el=document.getElementById(`sm_${p.id}_${k}`); if(el){el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash");}}}
+function floatStat(applied,money){ const lm={intelligence:"지능",charm:"매력",health:"건강",relationship:"인간관계",luck:"운"}; const parts=[]; for(const k in applied){ if(k!=="money"&&applied[k])parts.push(`${lm[k]} ${applied[k]>0?'+':''}${applied[k]}`);} if(money)parts.push(`자산 ${money>0?'+':''}${money}`); if(!parts.length)return; const up=Object.values(applied).some(v=>v>0)||money>0; const host=document.getElementById("scene"); if(!host||host.style.display==="none")return; const el=document.createElement("div"); el.className="floatstat "+(up?"up":"down"); el.textContent=parts.join("  "); host.appendChild(el); setTimeout(()=>el.remove(),1300); }
+function bindHoldRoll(){
+  const btn=document.getElementById("rollBtn"),gauge=document.getElementById("rollGauge"),marker=document.getElementById("rgMarker");
+  const pz=document.getElementById("rgPerfect"),gz=document.getElementById("rgGood"),hint=document.getElementById("rollHint");
+  const pc=rnd(38,62),pHalf=8,gHalf=18; pz.style.left=(pc-pHalf)+"%";pz.style.width=(pHalf*2)+"%";gz.style.left=(pc-gHalf)+"%";gz.style.width=(gHalf*2)+"%";
+  let pos=0,dir=1,anim=null,holding=false,settled=false;
+  function step(){pos+=dir*2.3;if(pos>=100){pos=100;dir=-1;}if(pos<=0){pos=0;dir=1;}marker.style.left=pos+"%";const d=Math.abs(pos-pc);hint.textContent=d<=pHalf?"지금이야! 🔥":d<=gHalf?"거의 다 왔다…":"타이밍을 노려라";anim=requestAnimationFrame(step);}
+  function judge(){if(settled)return;settled=true;cancelAnimationFrame(anim);btn.classList.remove("holding");const d=Math.abs(pos-pc);const key=d<=pHalf?"perfect":d<=gHalf?"good":(d<=gHalf+18?"ok":"miss");const v=Object.assign({key:key},TVERDICT[key]);hint.textContent=v.label+" — "+v.feel;btn.disabled=true;userP().timingHistory.push({where:"주사위",key});setTimeout(()=>doUserDice(v),520);}
+  function down(e){if(holding||settled)return;e.preventDefault();holding=true;btn.classList.add("holding");gauge.classList.add("on");pos=0;dir=1;step();}
+  function up(e){if(!holding||settled)return;e.preventDefault();holding=false;judge();}
+  btn.addEventListener("mousedown",down);btn.addEventListener("mouseup",up);btn.addEventListener("mouseleave",up);btn.addEventListener("touchstart",down,{passive:false});btn.addEventListener("touchend",up,{passive:false});
+}
+/* 상대 카드뽑기도 보이게: 세 장이 깔리고 하나가 뒤집힌다 */
+function aiCardShow(p, pool, apply, done){
+  const modal=document.getElementById("modal"); const choices=[]; const used=new Set();
+  while(choices.length<3&&choices.length<pool.length){ const c=pick(pool); if(!used.has(c.id)){used.add(c.id);choices.push(c);} }
+  const idx=rnd(0,choices.length-1), card=choices[idx];
+  document.getElementById("actionPanel").innerHTML=`<div class="wait-ai">🌸 ${p.name}${jo(p.name,'이가')} 카드를 고르는 중…</div>`;
+  modal.innerHTML=`<span class="m-type" style="background:linear-gradient(90deg,var(--purple),var(--blue))">🎴 ${p.name}의 기회 카드</span><h2>${p.name}${jo(p.name,'이가')} 카드를 고르는 중…</h2><p class="m-desc">세 장 중 하나가 곧 뒤집혀요.</p><div class="card-row">${choices.map((c,i)=>`<div class="card ${c.rarity==='rare'?'rare':''}" id="aiCard${i}"><div class="face2 back">🎴<small>카드 뒷면</small></div><div class="face2 front"><div class="c-emoji">${c.emoji}</div><div class="c-name">${c.name}</div><div class="c-eff">${c.desc}</div></div></div>`).join("")}</div>`;
+  document.getElementById("modalOverlay").classList.add("on");
+  setTimeout(()=>{ const el=document.getElementById(`aiCard${idx}`); if(el)el.classList.add("flip"); document.querySelectorAll("#modal .card").forEach((c,i)=>{ if(i!==idx) c.classList.add("dim"); }); const msg=apply(card); const md=modal.querySelector(".m-desc"); if(md)md.textContent=`${p.name}${jo(p.name,'이가')} 「${card.name}」 카드를 얻었어요. ${msg||""}`; },1100);
+  setTimeout(()=>{ document.getElementById("modalOverlay").classList.remove("on"); done(); },2700);
+}
+
+/* ── 등급 표시 ── */
+function statGrade(v){ if(v>=92)return "S"; if(v>=80)return "A"; if(v>=68)return "B"; if(v>=56)return "C"; if(v>=44)return "D"; if(v>=32)return "E"; return "F"; }
+function statChip(label,key,p){
+  const v=p.stats[key]||0;
+  return `<span class="grade-chip" id="sm_${p.id}_${key}" data-stat="${key}">${STAT_ICO[key]||""}<span class="grade-bar"><i class="grade-fill" style="width:${v}%"></i></span><b>${statGrade(v)}</b></span>`;
+}
+/* 능력치 설명 — 마우스를 올리면(클릭X) 무슨 능력인지 알려준다 */
+const STAT_DESC = {
+  intelligence:"<b>🧠 지능</b><br>공부·시험·직업의 힘. 높을수록 좋은 직업의 문이 열려요.",
+  charm:"<b>✨ 매력</b><br>호감·인기·발표에 쓰여요. 연애와 무대에서 빛나요.",
+  health:"<b>❤️ 건강</b><br>체력과 노년 의료비를 좌우해요. 무리하면 깎여요.",
+  relationship:"<b>🤝 인간관계</b><br>친구·가족·자녀 용돈으로 이어져요.",
+  luck:"<b>🍀 운</b><br>뜻밖의 기회와 행운의 확률. 높을수록 좋은 일이 자주 생겨요."
+};
+function ensureStatTip(){ let t=document.getElementById("statTip"); if(!t){ t=document.createElement("div"); t.id="statTip"; t.className="stat-tip"; document.body.appendChild(t); } return t; }
+document.addEventListener("mouseover",function(e){ const c=e.target.closest&&e.target.closest(".grade-chip[data-stat]"); if(!c)return; const t=ensureStatTip(); t.innerHTML=STAT_DESC[c.dataset.stat]||""; t.classList.add("on"); const r=c.getBoundingClientRect(); let x=r.right+10; if(x+236>window.innerWidth)x=r.left-236; t.style.left=Math.max(8,x)+"px"; t.style.top=Math.max(8,Math.min(window.innerHeight-90,r.top-4))+"px"; });
+document.addEventListener("mouseout",function(e){ const c=e.target.closest&&e.target.closest(".grade-chip[data-stat]"); if(c){ const t=document.getElementById("statTip"); if(t)t.classList.remove("on"); } });
+
+let players=null, GS=null;
+let turnIdx=0, round=1, busy=false;
+const roundRecords={};
+
+function userP(){ return players[0]; }
+function aiP(){ return players[1]; }
+function curP(){ return players[turnIdx]; }
+
+/* ── 초기화 + 진입 가드 ── */
+function init(){
+  players=loadPlayers();
+  if(!players||players.length<2){ alert("게임 정보가 없습니다. 시작 화면으로 돌아갑니다."); location.href="index.html"; return; }
+  players.forEach(ensureFields);
+  players.forEach(ensureYouthFields);
+  GS=loadGameState(); if(!GS.currentStage) GS.currentStage=STAGE_KEY;
+  applyNpcIdentity();
+  if(!(userP().stageDone&&userP().stageDone.child)){ location.href="stage_child.html"; return; }
+  if(!(userP().stageDone&&userP().stageDone.elementary)){ location.href="stage_elementary.html"; return; }
+  if(!(userP().stageDone&&userP().stageDone.middle)){ location.href="stage_middle.html"; return; }
+  if(!(userP().stageDone&&userP().stageDone.high)){ location.href="stage_high.html"; return; }
+  if(userP().stageDone&&userP().stageDone.youth){ location.href=STAGE_NEXT; return; }
+  GS.currentStage=STAGE_KEY;
+  players.forEach(p=>{ if(typeof p.youthPos!=="number") p.youthPos=0; p.childPos=p.youthPos; });
+  players.forEach(ensureCrush);
+  renderTimeline(); renderBoard(); renderRival();
+  document.getElementById("loadmask").style.display="none";
+  showTransition();
+}
+function ensureYouthFields(p){
+  const d={ youthPos:0, youthTrack:null, job:null, jobName:null, careerLevel:0,
+    youthIncomeTotal:0, youthCards:[], youthEventLog:[], burnoutLevel:0,
+    marriedAt:null, proposeTried:false, conflictSeen:false, talentDemoted:false,
+    twoTimingCaught:0, youthSummaryLine:null };
+  for(const k in d){ if(p[k]===undefined) p[k]=d[k]; }
+  if(typeof p.money!=="number") p.money=0;
+  if(!p.affinity) p.affinity={};
+  if(!p.eventFlags) p.eventFlags={};
+  // 고교에서 이어진 호감도를 affinity 맵으로 승계
+  // (예전엔 affinity에 중학교 첫사랑 0점이 먼저 들어 있으면 승계가 통째로 건너뛰어져,
+  //  고교에서 고백에 성공해도 청년기를 호감 0에서 시작했다 — 시뮬레이션 사용자 결혼 0%의 원인)
+  const hid=p.currentPartnerId||p.middleCrushNpcId||p.currentCrushId;
+  if(hid && !p.highAffCarried){
+    p.highAffCarried=true;
+    const carry=Math.min(80, Math.max(10, 40 + (p.highAffinity||0)*2) + (p.confessionResult==="성공"||p.hasPartner?10:0));
+    p.affinity[hid]=Math.max(p.affinity[hid]||0, carry);
+  }
+}
+function ensureCrush(p){
+  if(p.currentPartnerId) return;
+  if(p.middleCrushNpcId){ p.currentPartnerId=p.middleCrushNpcId; return; }
+  if(p.currentCrushId){ p.currentPartnerId=p.currentCrushId; return; }
+  const want = p.gender==="female" ? "male" : "female";
+  const pool = LOVE_NPCS.filter(n=>n.gender===want);
+  p.currentPartnerId = (pool.length? pick(pool):pick(LOVE_NPCS)).id;
+}
+function crushOf(p){ return LOVE_NPCS.find(n=>n.id===p.currentPartnerId) || LOVE_NPCS[0]; }
+function npcOf(id){ return LOVE_NPCS.find(n=>n.id===id) || LOVE_NPCS[0]; }
+function npcFace(npc, mood){
+  const g = npc.gender==="male" ? "male" : "female";
+  return `./image/love/${g}/${npc.id.replace("love_","")}/face_${mood||"normal"}.png`;
+}
+function affOf(p, id){ return (p.affinity||{})[id] || 0; }
+function addAff(p, id, v){
+  p.affinity=p.affinity||{};
+  p.affinity[id]=Math.max(0, Math.min(100, (p.affinity[id]||0)+v));
+}
+
+/* ── 청년기 아바타: 성인 이미지 사용 ── */
+function youthAvatar(p){
+  const c=getChar(p);
+  if(c && c.adultBaseImage) return { image:c.adultBaseImage.replace("/adult.png","/youth.png"), fallback:c.adultBaseFallback||(p.gender==="female"?"👩":"👨") };
+  return { image:(p.gender==="female"?"./image/user/female/1/youth.png":"./image/user/male/1/youth.png"), fallback:(p.gender==="female"?"👩":"👨") };
+}
+function avaImg(p){ const a=youthAvatar(p); return imgTag(a.image, a.fallback, "height:100%;width:auto;object-fit:contain"); }
+
+/* ── 표정 ── 캐릭터당 5종(normal/happy/worried/sad/burnout). 연애 밖에서도 쓴다. */
+function charFace(p, mood){
+  const c=getChar(p);
+  if(c && c.faces && c.faces[mood]) return imgTag(c.faces[mood].image, c.faces[mood].fallback||"🙂","height:100%;width:auto;object-fit:contain");
+  return avaImg(p);
+}
+/* 선택 결과 → 표정. 무엇을 얻고 무엇을 잃었는지가 얼굴에 드러난다. */
+function moodFromApplied(applied, fallback){
+  if(!applied) return fallback||"normal";
+  let up=0, down=0, healthHit=0;
+  for(const k in applied){
+    const v=applied[k]; if(!v) continue;
+    if(v>0) up+=v; else { down+=-v; if(k==="health") healthHit+=-v; }
+  }
+  if(healthHit>=4 && up<=down) return "burnout";
+  if(down===0 && up>0) return "happy";
+  if(up===0 && down>0) return "sad";
+  if(down>up) return "worried";
+  if(up>0) return "happy";
+  return fallback||"normal";
+}
+function setHeroFace(p, mood){
+  const el=document.getElementById("heroBody"); if(!el) return;
+  el.innerHTML=`<div class="hero-ava">${charFace(p,mood)}</div>`;
+  el.classList.remove("react"); void el.offsetWidth; el.classList.add("react");
+}
+function popBubble(){
+  const b=document.getElementById("sceneBubble"); if(!b) return;
+  b.style.animation="none"; void b.offsetWidth; b.style.animation="";
+}
+
+/* ── 렌더 ── */
+function renderTimeline(){
+  document.getElementById("timeline").innerHTML = LIFE_TIMELINE.map(t=>{
+    const done = LIFE_TIMELINE.findIndex(x=>x.key===STAGE_KEY) > LIFE_TIMELINE.findIndex(x=>x.key===t.key);
+    const now = t.key===STAGE_KEY;
+    return `<span class="tl ${now?"now":done?"done":""}">${t.ico}<b>${t.name}</b></span>`;
+  }).join("");
+}
+function renderBoard(){
+  const el=document.getElementById("miniboard"); el.innerHTML="";
+  const tmap={}; players.forEach(p=>{ if(typeof p._moveTarget==="number") tmap[p._moveTarget]=p._lastSteps||""; });
+  YOUTH_BOARD.forEach((c,i)=>{
+    const cell=document.createElement("div");
+    cell.className=`cell ${cellClass(i)}${tmap[i]?" next":""}`; cell.id=`cell${i}`;
+    cell.innerHTML=`<span class="cn">${i+1}</span><span class="cell-ico">${c.ico}</span><span class="cell-name">${c.name}</span>${tmap[i]?`<span class="step-badge">+${tmap[i]}칸</span>`:""}`;
+    el.appendChild(cell);
+  });
+  placeToken(userP(),"user"); placeToken(aiP(),"ai"); highlightCells();
+}
+function placeToken(p,kind){
+  kind=kind||(p.type==="user"?"user":"ai");
+  const old=document.getElementById(`tok_${p.id}`); if(old) old.remove();   // 말은 언제나 한 개
+  const cell=document.getElementById(`cell${p.childPos}`); if(!cell) return;
+  const t=document.createElement("div"); t.className=`tok ${kind}`; t.id=`tok_${p.id}`;
+  t.innerHTML=kind==="user"?"🙂":"🌸"; cell.appendChild(t);
+}
+function highlightCells(){
+  document.querySelectorAll(".cell.cur").forEach(c=>c.classList.remove("cur"));
+  const c=document.getElementById(`cell${curP().childPos}`); if(c) c.classList.add("cur");
+}
+function trackFeel(p){
+  const m={corp:"월급을 받는 삶",exam:"시험을 준비하는 삶",talent:"재능을 파는 삶",venture:"판을 벌이는 삶"};
+  return p.youthTrack? m[p.youthTrack] : "아직 길을 정하지 않았어요";
+}
+function moneyFeel(p){
+  const m=p.money||0;
+  if(m<0) return `빚이 있어요 (${m})`;
+  if(m<100) return `자산 ${m}`;
+  if(m<400) return `자산 ${m}`;
+  return `자산 넉넉 (${m})`;
+}
+function jobFeel(p){ return p.job ? `${p.job.emoji} ${p.job.name}` : "아직 무직이에요"; }
+function marryFeel(p){
+  if(p.isMarried) return `💍 ${p.spouseName}와 결혼`;
+  const c=marriageCandidates(p);
+  return c.length? "청혼할 수 있는 사람이 있어요" : "아직 결혼 이야기는 일러요";
+}
+function rivalCol(p){
+  const sm=(k)=>statChip(null,k,p);
+  const m=p.money||0;
+  return `<div class="rc-ava">${avaImg(p)}</div>
+    <div class="rc-name"><i class="rc-dot"></i>${p.name}</div>
+    <div class="rc-stats">${sm('intelligence')}${sm('charm')}${sm('health')}${sm('relationship')}${sm('luck')}</div>
+    <div class="rc-meta">
+      <span class="rc-sub" title="현재 위치">📍 <b>${p.childPos+1}</b>/28</span>
+      ${p.job?`<span class="rc-sub" title="${jobFeel(p)}">${p.job.emoji} ${p.job.name}</span>`:`<span class="rc-sub" title="${trackFeel(p)}">🛣️ ${p.youthTrack?trackFeel(p):"진로 미정"}</span>`}
+      <span class="rc-sub" title="${moneyFeel(p)}">👛 <b>${m}</b></span>
+      ${p.isMarried?`<span class="rc-sub" title="${marryFeel(p)}">💍 ${p.spouseName||"결혼"}</span>`:""}
+    </div>`;
+}
+function renderRival(){
+  const uc=document.getElementById("userCol"), ac=document.getElementById("aiCol");
+  uc.className="pcol is-user "+((curP().id===userP().id)?"turn":"");
+  ac.className="pcol is-ai "+((curP().id===aiP().id)?"turn":"");
+  uc.innerHTML=rivalCol(userP()); ac.innerHTML=rivalCol(aiP());
+  renderBag();
+}
+function setMid(t,m,f){
+  document.getElementById("rmidTurn").innerHTML=t;
+  document.getElementById("rmidMove").innerHTML=m;
+  document.getElementById("rmidFeel").innerHTML=f||"";
+}
+function log(html,kind){
+  const el=document.getElementById("log");
+  const it=document.createElement("div"); it.className="logitem "+(kind||""); it.innerHTML=html;
+  el.insertBefore(it,el.firstChild);
+  while(el.children.length>30) el.removeChild(el.lastChild);
+}
+function showSceneMsg(hero, chip, say, sub){
+  const sc=document.getElementById("scene"); sc.style.display="";
+  const cell=YOUTH_BOARD[curP().childPos]||{};
+  setSituation(cell.type, cell.ico);
+  document.getElementById("sceneChip").textContent=chip;
+  document.getElementById("heroBody").innerHTML=hero;
+  document.getElementById("sceneSay").innerHTML=say;
+  document.getElementById("sceneSub").innerHTML=sub||"";
+  popBubble();
+}
+function choiceCardsHTML(choices,opts){
+  opts=opts||{};
+  return `<div class="act-grid">${choices.map((c,i)=>{
+    const cls=["btn","act-btn"];
+    if(opts.ai)cls.push("ai-thinking");
+    if(opts.picked===i)cls.push("ai-picked"); else if(opts.picked!==undefined)cls.push("ai-dim");
+    const click=opts.ai?"":` onclick="${opts.handler||'chooseScene'}(${i})"`;
+    return `<button class="${cls.join(" ")}"${click}><span class="ai">${c.ai}</span>${c.text}</button>`;
+  }).join("")}</div>`;
+}
+function deltaStr(applied,money){
+  const lm={intelligence:"지능",charm:"매력",health:"건강",relationship:"인간관계",luck:"운"};
+  const parts=[];
+  for(const k in applied){ if(k==="money") continue; if(applied[k])parts.push(`${lm[k]}${applied[k]>0?'+':''}${applied[k]}`); }
+  if(money)parts.push(`자산${money>0?'+':''}${money}`);
+  return parts.length?`(${parts.join(", ")})`:"";
+}
+
+/* ── 인트로: 재능 공개 + 진로 선택 ── */
+function showTransition(){
+  const u=userP();
+  const k=topTalent(u), lv=k?talentLevel(u,k):0;
+  const talentBox = k
+    ? `<div class="rule"><span class="ri">${TALENT_CATEGORIES[k].emoji}</span><span>어린 시절 쌓아온 <b>${TALENT_CATEGORIES[k].name}</b> — ${talentFeel(lv)} ${TALENT_STAR[lv]}<br><small>이 시대부터 재능은 돈이 됩니다.</small></span></div>`
+    : `<div class="rule"><span class="ri">🌫️</span><span>뚜렷하게 쌓아온 재능은 없어요.<br><small>대신 어떤 길이든 편견 없이 갈 수 있어요.</small></span></div>`;
+  document.getElementById("modal").innerHTML=`
+    <span class="m-type" style="background:var(--purple)">🏫 → 🎓 성인</span>
+    <h2>스무 살이 되었어요</h2>
+    <p class="m-desc">교복을 벗었어요. 이제부터는 <b>버는 것</b>과 <b>사는 것</b>이 함께 굴러갑니다.</p>
+    <div class="rule-grid">${talentBox}</div>
+    <button class="btn btn-primary" style="margin-top:14px" onclick="closeTransition()">길을 정하러 가기 →</button>`;
+  document.getElementById("modalOverlay").classList.add("on");
+}
+function closeTransition(){
+  document.getElementById("modalOverlay").classList.remove("on");
+  trackChoice();
+}
+
+/* ── 진로 선택 (꿈) ── */
+function trackChoice(){
+  const u=userP();
+  showSceneMsg(`<div class="hero-ava">${avaImg(u)}</div>`,"진로","어떤 길로 갈까요?","한 번 정하면 이 시대 내내 따라옵니다");
+  setMid("🧭 갈림길","인생의 방향을<br>정하는 순간","");
+  document.getElementById("actionPanel").innerHTML=
+    `<div class="ap-label">어떤 어른이 되고 싶나요?</div>${choiceCardsHTML(TRACKS,{handler:"chooseTrack"})}`;
+}
+function chooseTrack(i){
+  if(busy) return; busy=true;
+  const u=userP(), t=TRACKS[i];
+  u.youthTrack=t.key; u.desiredJob=t.key;
+  // 상대도 성향대로 트랙 선택
+  const a=aiP();
+  const aiPrefer={stable:"exam",challenger:"venture",romantic:"corp",tycoon:"venture",grinder:"corp"};
+  a.youthTrack=aiPrefer[a.aiTrait]||"corp"; a.desiredJob=a.youthTrack;
+  log(`🧭 <b>${u.name}</b>${jo(u.name,'은는')} 「${t.text}」을 택했어요`);
+  log(`🧭 <b>${a.name}</b>${jo(a.name,'은는')} 「${(TRACKS.find(x=>x.key===a.youthTrack)||TRACKS[0]).text}」을 택했어요`);
+  busy=false;
+  // 재능과 어긋나면 갈등 이벤트
+  const k=topTalent(u);
+  const mismatch = k && talentLevel(u,k)>=2 && !TRACKS.find(x=>x.key===t.key).tiers.some(tier=>
+    JOBS.filter(j=>j.tier===tier).some(j=>TALENT_CATEGORIES[k].jobs.includes(j.name)));
+  if(mismatch && !u.conflictSeen){ conflictEvent(u,k); return; }
+  jobHunt(u);
+}
+
+/* ── 갈등 이벤트: 꿈 vs 재능 ── */
+function conflictEvent(p, k){
+  p.conflictSeen=true;
+  const c=TALENT_CATEGORIES[k];
+  document.getElementById("modal").innerHTML=`
+    <span class="m-type" style="background:var(--coral)">⚡ 갈등</span>
+    <h2>"${c.name}${jo(c.name,'은는')} 어쩌고?"</h2>
+    <p class="m-desc">부모님이 물었어요. 어릴 때부터 쌓아온 <b>${c.emoji} ${c.name}</b>${jo(c.name,'을를')} 두고,<br>지금 다른 길을 고르려 하고 있어요.</p>
+    <div class="act-grid">
+      <button class="btn act-btn" onclick="resolveConflict(0)"><span class="ai">🎯</span>고른 길을 간다</button>
+      <button class="btn act-btn" onclick="resolveConflict(1)"><span class="ai">${c.emoji}</span>재능을 따라간다</button>
+      <button class="btn act-btn" onclick="resolveConflict(2)"><span class="ai">🔥</span>둘 다 해본다</button>
+    </div>`;
+  document.getElementById("modalOverlay").classList.add("on");
+}
+function resolveConflict(i){
+  const u=userP(); const k=topTalent(u); const c=TALENT_CATEGORIES[k];
+  document.getElementById("modalOverlay").classList.remove("on");
+  if(i===0){
+    u.talentDemoted=true;
+    log(`⚡ 꿈을 택했어요. <b>${c.name}</b>${jo(c.name,'은는')} 취미가 되었어요 <small>(부수입 절반)</small>`);
+  }else if(i===1){
+    u.youthTrack="talent"; u.desiredJob="talent";
+    log(`⚡ 재능을 택했어요. <b>${c.name}</b>의 길로 방향을 틀었어요`);
+  }else{
+    u.talentDemoted=true;
+    const ap=applyStat(u,{health:-10});
+    log(`⚡ 둘 다 붙잡았어요 ${deltaStr(ap)} <small>(재능 부수입 절반, 체력 소모)</small>`);
+  }
+  jobHunt(u);
+}
+
+/* ── 취업 ── */
+/* 성인이 되면 직업이 요구하는 능력치를 살짝 보여준다(등급으로). 학창시절 연애처럼 완전 비공개는 아니다. */
+function jobReqHint(job){
+  const u=userP(); const lm={intelligence:"지능",charm:"매력",health:"건강",relationship:"인간관계",luck:"운",money:"자산"};
+  return (job.req||[]).map(function(k){ return lm[k]+(k==="money"?"":" "+statGrade((u.stats&&u.stats[k])||0)); }).join(" · ");
+}
+function jobHunt(p){
+  const pool=jobsForTrack(p.youthTrack);
+  const picks=pool.slice(0,3);
+  if(!picks.length){ startYouth(); return; }
+  const choices=picks.map(j=>({ text:`${j.name}에 지원<br><small style="opacity:.72;font-weight:600">필요 능력치 ${jobReqHint(j)}</small>`, ai:j.emoji, job:j }));
+  showSceneMsg(`<div class="hero-ava">${avaImg(p)}</div>`,"취업","어디에 지원할까요?","합격은 아무도 장담할 수 없어요");
+  setMid("💼 지원","이력서를<br>어디에 낼까요?","");
+  document.getElementById("actionPanel").innerHTML=
+    `<div class="ap-label">${trackFeel(p)}</div>${choiceCardsHTML(choices,{handler:"applyJob"})}`;
+  window._jobChoices=choices;
+}
+function applyJob(i){
+  if(busy) return; busy=true;
+  const u=userP(); const job=window._jobChoices[i].job;
+  const pr=jobChance(u,job);
+  runTiming({kind:"면접", icon:"💼", title:"면접의 순간", desc:"준비한 만큼, 그리고 <b>타이밍</b>만큼.", accent:"var(--blue)"}, function(v){
+    const ok = Math.random() < Math.max(0.05, Math.min(0.95, pr + v.bonus));
+    if(ok){ setJob(u, job); log(`💼 <b>${u.name}</b> — ${job.emoji} ${job.name} 합격! <small>${v.label}</small>`); }
+    else{
+      // 불합격이 곧 무직은 아니다. 눈을 낮춰 자리를 잡는다 —
+      // 그래야 "취업 트랙"이 함정이 아니라 선택지가 된다.
+      const fb=fallbackJob(u, job);
+      log(`💼 <b>${u.name}</b> — ${job.name} 불합격… <small>${v.label}</small>`);
+      applyStat(u,{charm:-3, health:-3});
+      if(fb){ setJob(u, fb); u.jobFallback=true; log(`💼 <b>${u.name}</b> — 눈을 낮춰 ${fb.emoji} ${fb.name}${jo(fb.name,"으로")} 시작해요`); }
+    }
+    aiJobHunt(aiP(), job);
+    renderRival();
+    busy=false;
+    // 같은 회사, 남은 자리는 하나 (설계서 §5 라이벌 접점)
+    if(!sameCompanyDuel(u, aiP())) setTimeout(startYouth, 700);
+  });
+}
+function setJob(p, job){
+  p.job={name:job.name, emoji:job.emoji, tier:job.tier, baseSalary:job.baseSalary, freelance:!!job.freelance, venture:!!job.venture};
+  p.jobName=job.name; p.jobTier=job.tier; p.salary=job.baseSalary;
+  p.careerHistory=p.careerHistory||[]; p.careerHistory.push({stage:"youth", job:job.name});
+}
+function aiJobHunt(a, rivalJob){
+  const pool=jobsForTrack(a.youthTrack); if(!pool.length) return;
+  let job=pool[rnd(0,Math.min(2,pool.length-1))];
+  // 같은 길을 가는 라이벌은 절반 확률로 내가 지원한 회사에 원서를 낸다
+  if(rivalJob && pool.some(j=>j.name===rivalJob.name) && Math.random()<0.5) job=rivalJob;
+  if(Math.random() < jobChance(a,job)+0.1){ setJob(a,job); log(`💼 <b>${a.name}</b> — ${job.emoji} ${job.name} 합격`); }
+  else{
+    const fb=fallbackJob(a, job);
+    if(fb){ setJob(a,fb); a.jobFallback=true; log(`💼 <b>${a.name}</b> — 눈을 낮춰 ${fb.emoji} ${fb.name}${jo(fb.name,"으로")} 시작해요`); }
+    else log(`💼 <b>${a.name}</b> — 아직 취업 준비 중이에요`);
+  }
+}
+
+/* 둘 다 같은 회사에 붙었다면 한 명만 남는다 — 적합도 + 운으로 가린다 */
+function sameCompanyDuel(u, a){
+  if(!u.job || !a.job || u.job.name!==a.job.name || u.jobFallback || a.jobFallback) return false;
+  const jobDef=JOBS.find(j=>j.name===u.job.name); if(!jobDef) return false;
+  const us=jobFitScore(u,jobDef)+u.stats.luck*0.1+rnd(-6,6), as=jobFitScore(a,jobDef)+a.stats.luck*0.1+rnd(-6,6);
+  const iWin=us>=as, loser=iWin?a:u;
+  const fb=fallbackJob(loser, jobDef);
+  if(fb){ setJob(loser, fb); loser.jobFallback=true; }
+  log(`🏢 <b>${jobDef.name}</b> 최종 한 자리 — <b>${(iWin?u:a).name}</b> 합격, ${loser.name}${jo(loser.name,"은는")} ${fb?fb.name+jo(fb.name,"으로"):"다른 길로"}`, iWin?"good":"a");
+  if(iWin) celebrate(["💼","🎉","✨"]);
+  renderRival(); savePlayers();
+  document.getElementById("modal").innerHTML=`
+    <span class="m-type" style="background:linear-gradient(90deg,var(--blue),var(--purple))">🏢 최종 면접</span>
+    <h2>같은 회사, 남은 자리는 하나</h2>
+    <p class="m-desc"><b>${a.name}</b>도 <b>${jobDef.emoji} ${jobDef.name}</b>에 지원했어요. 최종 면접에서 둘 중 한 명만 남아요.</p>
+    <div class="settle-duo">
+      <div class="settle-person user"><div class="settle-face">${avaImg(u)}</div><div class="settle-name">🙂 ${u.name}</div><div class="settle-line"><b>${iWin?"최종 합격 🎉":"아쉽게 탈락"}</b></div></div>
+      <div class="settle-person ai"><div class="settle-face">${avaImg(a)}</div><div class="settle-name">🌸 ${a.name}</div><div class="settle-line"><b>${iWin?"아쉽게 탈락":"최종 합격"}</b></div></div>
+    </div>
+    <p class="m-desc">${iWin?`${a.name}${jo(a.name,"은는")} 눈을 낮춰 ${fb.emoji} ${fb.name}${jo(fb.name,"으로")} 시작해요.`:`눈을 낮춰 ${fb.emoji} ${fb.name}${jo(fb.name,"으로")} 시작해요. 이직은 성인기에 다시 노려봐요.`}</p>
+    <button class="btn btn-primary" style="margin-top:12px" onclick="document.getElementById('modalOverlay').classList.remove('on');startYouth()">계속 →</button>`;
+  document.getElementById("modalOverlay").classList.add("on");
+  return true;
+}
+
+/* ── 턴 ── */
+function startYouth(){
+  document.getElementById("scene").style.display="none";
+  round=1; turnIdx=0; busy=false;
+  savePlayers(); saveGameState();
+  beginTurn();
+}
+function beginTurn(){
+  if(round>TOTAL_ROUNDS){ stageSettle(); return; }
+  document.getElementById("roundLabel").textContent=`청년기 ${round} / ${TOTAL_ROUNDS} 라운드`;
+  const p=curP();
+  renderRival(); renderBoard();
+  document.getElementById("scene").style.display="none";
+  if(p.childPos>=FINISH_CELL){ bonusActivity(p); return; }
+  if(p.type==="user") showUserRoll(p); else showAiRoll(p);
+}
+function showUserRoll(p){
+  busy=false; p=p||userP();
+  setMid("🎲 내 차례",`현재 <b>${p.childPos+1}칸</b> · 도착까지 ${Math.max(0,FINISH_CELL-p.childPos)}칸`,"큰 버튼을 꾹 눌렀다 떼세요");
+  document.getElementById("actionPanel").innerHTML=`
+    <div class="roll-gauge" id="rollGauge"><div class="rg-perfect" id="rgPerfect"></div><div class="rg-good" id="rgGood"></div><div class="rg-marker" id="rgMarker"></div></div>
+    <div class="roll-hint" id="rollHint">버튼을 꾹 누르면 게이지가 움직여요</div>
+    <button class="btn btn-roll" id="rollBtn"><span class="dice-ico">🎲</span> 꾹 눌러 하루 시작</button>`;
+  bindHoldRoll();
+}
+function doUserDice(v){
+  if(busy) return; busy=true;
+  const p=userP(); const steps=rollValue(v);
+  const from=p.childPos, to=Math.min(FINISH_CELL,from+steps);
+  p._lastSteps=steps; p._moveTarget=to; renderBoard();
+  setMid("🎲 주사위 결과!",`<span class="big">+${steps}칸</span>${from+1}칸 → ${to+1}칸`,`타이밍 ${v.label}`);
+  log(`🎲 <b>${p.name}</b> 주사위 +${steps}칸 (${v.label})`,"u");
+  document.getElementById("actionPanel").innerHTML=`<div class="ap-label">말이 이동 중…</div>`;
+  movePiece(p, steps, ()=>arriveCell(p));
+}
+function rollValue(v){
+  // 고교와 동일한 방식: verdict가 실제로 확률을 바꾼다 (min(4)로 보너스가 증발하지 않도록)
+  let s=rnd(1,3);
+  if(v.key==="perfect" && Math.random()<0.55) s=Math.min(4,s+1);
+  else if(v.key==="good" && Math.random()<0.32) s=Math.min(4,s+1);
+  else if(v.key==="miss" && Math.random()<0.4) s=Math.max(1,s-1);
+  return Math.max(1,s);
+}
+function aiTimingSkill(p){
+  const b={stable:0.5,challenger:0.62,romantic:0.5,tycoon:0.6,grinder:0.66}[p.aiTrait]||0.5;
+  return Math.max(0.3,Math.min(0.85, b+((p.stats.luck||50)-50)/200));
+}
+function showAiRoll(p){
+  setMid(`🌸 ${p.name}의 차례`,`현재 <b>${p.childPos+1}칸</b>`,`${p.name}${jo(p.name,'이가')} 타이밍을 재는 중…`);
+  document.getElementById("actionPanel").innerHTML=`<div class="wait-ai">🌸 ${p.name}${jo(p.name,'이가')} 주사위를 굴리는 중…</div>`;
+  const skill=aiTimingSkill(p);
+  setTimeout(()=>{
+    const r=Math.random(); let key;
+    if(r<skill*0.4)key="perfect"; else if(r<skill*0.4+0.35)key="good"; else if(r<skill*0.4+0.65)key="ok"; else key="miss";
+    const v=Object.assign({key:key}, TVERDICT[key]);
+    p.timingHistory.push({where:"주사위",key});
+    const steps=rollValue(v); const from=p.childPos, to=Math.min(FINISH_CELL,from+steps);
+    p._lastSteps=steps; p._moveTarget=to; renderBoard();
+    setMid(`🌸 ${p.name} 이동`,`<span class="big">+${steps}칸</span>${from+1}칸 → ${to+1}칸`,`타이밍 ${v.label}`);
+    log(`🌸 <b>${p.name}</b> 판정 ${v.label} · +${steps}칸`,"a");
+    document.getElementById("actionPanel").innerHTML=`<div class="ap-label">${p.name}의 말이 이동 중…</div>`;
+    movePiece(p, steps, ()=>arriveCell(p));
+  }, 1100);
+}
+function movePiece(p, steps, cb){
+  let remain=steps;
+  function hop(){
+    if(remain<=0 || p.childPos>=FINISH_CELL){
+      p.youthPos=p.childPos; delete p._moveTarget; delete p._lastSteps; renderBoard();
+      const c=document.getElementById(`cell${p.childPos}`); if(c){c.classList.remove("arrive");void c.offsetWidth;c.classList.add("arrive");}
+      setTimeout(()=>{ cb&&cb(); },260); return;
+    }
+    p.childPos=Math.min(FINISH_CELL, p.childPos+1); remain--; p.youthPos=p.childPos;
+    placeToken(p); highlightCells();
+    const tok=document.getElementById(`tok_${p.id}`); if(tok){tok.classList.remove("hop");void tok.offsetWidth;tok.classList.add("hop");}
+    setTimeout(hop,240);
+  }
+  hop();
+}
+
+/* ── 도착 ── */
+/* ── 길 위의 행운 ── 이동 후 낮은 확률(운 비례)로 뜻밖의 일. 행운 위주. */
+const ROAD_LUCK = [
+  {good:true, ico:"🍀", txt:"네잎클로버를 주웠어요!", eff:{luck:3}},
+  {good:true, ico:"🌈", txt:"왠지 오늘은 기분이 좋아요!", eff:{charm:2,luck:1}},
+  {good:true, ico:"⭐", txt:"길에서 칭찬을 들었어요!", eff:{charm:2,relationship:1}},
+  {good:true, ico:"💪", txt:"기운이 솟아나요!", eff:{health:2,luck:1}},
+  {good:true, ico:"🎈", txt:"좋은 소식을 들었어요!", eff:{relationship:2,luck:1}},
+  {good:true, ico:"📖", txt:"우연히 배운 게 있어요!", eff:{intelligence:2}},
+  {good:false, ico:"🪨", txt:"돌부리에 걸려 넘어졌어요.", eff:{health:-2}},
+  {good:false, ico:"🌧️", txt:"갑자기 비를 맞았어요.", eff:{health:-1,luck:-1}},
+  {good:true, ico:"👴", txt:"지나가던 어르신이 용돈을 쥐여줬어요!", money:70},
+  {good:true, ico:"✨", txt:"오늘따라 운이 확 트였어요!", eff:{luck:4,charm:1}},
+  {good:true, ico:"🔁", txt:"신이 나서 한 걸음 더 — 한 턴 더!", bonus:"extra"}
+];
+function roadToast(ico, txt, good){
+  const el=document.createElement("div"); el.className="road-toast "+(good?"good":"bad");
+  el.innerHTML='<span class="rt-ico">'+ico+'</span> '+txt;
+  document.body.appendChild(el);
+  requestAnimationFrame(function(){el.classList.add("on");});
+  setTimeout(function(){ el.classList.remove("on"); setTimeout(function(){el.remove();},300); }, 1500);
+}
+/* 길 위의 사건 — 가운데 무대에서 두 박자로 보여준다: ① 놀람("뭔가 있어요…") ② 공개.
+   사용자가 [계속]을 눌러야 넘어가므로 순식간에 지나가지 않는다. */
+function roadEventScene(p, ico, txt, good, sub, done){
+  if(p.type!=="user"){
+    if(typeof log==="function") log(ico+" <b>"+p.name+"</b> — "+txt, good?"u":"a");
+    setTimeout(done, 600); return;
+  }
+  try{ showSceneMsg('<div class="hero-ava">'+charFace(p,"worried")+'</div>', "❓ 길 위에서", "어라, 뭔가 있어요…", "무슨 일일까요?"); }catch(e){}
+  try{ setMid("❓ 길 위에서", '<span class="big">?</span>', "숨을 고르는 순간"); }catch(e){}
+  try{ document.getElementById("actionPanel").innerHTML='<div class="ap-label">…</div>'; }catch(e){}
+  setTimeout(function(){
+    try{ showSceneMsg('<div class="hero-ava">'+charFace(p, good?"happy":"sad")+'</div>', (good?"✨ 길 위의 행운":"⚠️ 길 위의 사건"), ico+"  "+txt, sub||(good?"오늘은 운이 따랐어요":"오늘은 조금 아쉬웠어요")); }catch(e){}
+    try{ setMid(good?"✨ 행운":"⚠️ 사건", '<span class="big">'+ico+'</span>', txt); }catch(e){}
+    try{ if(good && typeof celebrate==="function") celebrate([ico,"✨","🍀"]); }catch(e){}
+    window.__roadNext=function(){ window.__roadNext=null; done(); };
+    try{ document.getElementById("actionPanel").innerHTML='<button class="btn btn-primary" onclick="__roadNext&&__roadNext()">계속 →</button>'; }catch(e){}
+  }, 1100);
+}
+function rollRoadLuck(p, done){
+  const chance = 0.13 + Math.max(0,(((p.stats&&p.stats.luck)||50)-50))*0.004;
+  if(Math.random() > chance){ done(); return; }
+  if(p.type==="user" && Math.random()<0.30 && typeof giveItem==="function"){
+    const _id=randomItemId(); const _it=ITEMS[_id]; giveItem(p,_id);
+    roadEventScene(p, _it.emoji, "길에서 "+_it.name+jo(_it.name,'을를')+" 주웠어요!", true, "가방에 넣어 뒀어요", done); return;
+  }
+  const pool = Math.random()<0.82 ? ROAD_LUCK.filter(function(r){return r.good;}) : ROAD_LUCK;
+  const r = pick(pool);
+  const applied = applyStat(p, Object.assign({}, r.eff||{}));
+  if(r.money && typeof p.money==="number") p.money=(p.money||0)+r.money;
+  if(r.bonus==="extra") p._extraTurn=true;
+  if(typeof flashMini==="function") flashMini(p, applied);
+  if(typeof renderRival==="function") renderRival();
+  var _sub = (r.bonus==="extra") ? "한 번 더 굴릴 수 있어요!" : (r.money ? "용돈이 생겼어요" : ((typeof deltaStr==="function")?deltaStr(applied):""));
+  roadEventScene(p, r.ico, r.txt, !!r.good, _sub, done);
+}
+function arriveCell(p){ rollRoadLuck(p, function(){ arriveCellReal(p); }); }
+function arriveCellReal(p){
+  // 주사위→이동 동안 걸어둔 잠금을 여기서 푼다. 이 시점부터 다시 선택을 받는다.
+  busy=false;
+  p.youthPos=p.childPos;
+  const cell=YOUTH_BOARD[p.childPos];
+  if(cell.type==="card"){ cardCell(p); return; }
+  if(cell.type==="love"){ loveCell(p); return; }
+  if(cell.type==="marry"){ marryCell(p); return; }
+  sceneCell(p);
+}
+function sceneCell(p){
+  // 칸 전용 풀에서 랜덤. 아이콘이 약속한 사건은 지키되, 매번 다른 이야기가 나온다.
+  const pool=CELL_EVENTS[p.childPos];
+  if(!pool||!pool.length){ console.warn("씬 없는 칸:",p.childPos,YOUTH_BOARD[p.childPos]); nextTurn(); return; }
+  const sc=pick(pool);
+  showSceneMsg(`<div class="hero-ava">${avaImg(p)}</div>`, sc.chip, sc.say, sc.sub);
+  document.getElementById("turnCount").textContent = p.type==="user"?"내 선택":"상대 선택";
+  if(p.type==="user"){
+    setMid("🎯 선택의 순간","도착한 곳에서<br>무엇을 할까요?","");
+    document.getElementById("actionPanel").innerHTML=`<div class="ap-label">${sc.sub}</div>${choiceCardsHTML(sc.choices)}`;
+    window._sc=sc; window._scP=p;
+  }else{
+    setMid(`🌸 ${p.name}의 선택`,"무엇을 할지<br>고민하고 있어요…","");
+    document.getElementById("actionPanel").innerHTML=`<div class="ap-label">${p.name}${jo(p.name,'이가')} 무엇을 고를지 고민하고 있어요…</div>${choiceCardsHTML(sc.choices,{ai:true})}`;
+    const idx=aiChoiceIndex(p, sc.choices);
+    setTimeout(()=>{
+      document.getElementById("actionPanel").innerHTML=`<div class="ap-label">${p.name}${jo(p.name,'은는')} 「${sc.choices[idx].text}」${jo(sc.choices[idx].text,'을를')} 선택했어요</div>${choiceCardsHTML(sc.choices,{ai:true,picked:idx})}`;
+      applyChoiceResult(p, sc, idx, true);
+    }, 1000);
+  }
+}
+function chooseScene(i){ if(busy) return; busy=true; applyChoiceResult(window._scP, window._sc, i, false); }
+function applyChoiceResult(p, sc, i, isAi){
+  const c=sc.choices[i];
+  const eff=Object.assign({}, c.eff||{});
+  // 돈은 eff.money(기존 청년기 씬)와 c.money(칸별 신규 씬) 양쪽에서 온다
+  const money = (eff.money||0) + (c.money||0); delete eff.money;
+  const applied=applyStat(p, eff);
+  if(money){ p.money=clampMoney((p.money||0)+money); }
+  if(c.flag){ p.eventFlags[c.flag]=true; }
+  if(c.career){ p.careerLevel=(p.careerLevel||0)+c.career; }
+  if(c.burnout){ p.burnoutLevel=(p.burnoutLevel||0)+c.burnout; }
+  if(c.aff){ addAff(p, p.currentPartnerId, queenAff(p, c.aff)); }   // 👑 여왕벌: 호감 1.5배
+  if(c.lotto){
+    const win = Math.random() < 0.08 + (p.stats.luck-50)*0.002;
+    if(win){ p.money=clampMoney((p.money||0)+300); log(`🎫 <b>${p.name}</b> — 복권 당첨! <small>자산+300</small>`); }
+  }
+  const who = p.type==="user" ? "🙂" : "🌸";
+  const npcEl=document.getElementById("npcFace");
+  if(npcEl && c.aff!==undefined){
+    // 데이트 중 — 두 얼굴을 지우지 않고 각각 갱신 (상대 반응이 선택마다 달라진다)
+    const npc=crushOf(p);
+    npcEl.innerHTML=imgTag(npcFace(npc, (c.aff||0)>=9?"happy":(c.aff||0)<0?"sad":(c.mood||"normal")), npc.baseFallback||"🙂","height:100%;width:auto;object-fit:contain");
+    npcEl.classList.remove("glow","dim");
+    if((c.aff||0)>=9) npcEl.classList.add("glow"); else if((c.aff||0)<0) npcEl.classList.add("dim");
+  } else {
+    setHeroFace(p, moodFromApplied(applied, c.mood||sc.mood));
+  }
+  document.getElementById("sceneSay").innerHTML = isAi?`${p.name}${jo(p.name,'은는')} 「${c.text}」${jo(c.text,'을를')} 선택했어요.`:c.res;
+  document.getElementById("sceneSub").innerHTML = deltaStr(applied, money);
+  log(`${who} <b>${p.name}</b> — ${c.res} ${deltaStr(applied, money)}`, isAi?"a":"u");
+  floatStat(applied, money); flashMini(p, applied);
+  renderRival(); savePlayers();
+  // 결과를 읽을 시간을 준다 (600ms면 결과 문장이 보이기도 전에 사라졌다)
+  setTimeout(()=>{ busy=false; nextTurn(); }, isAi?1500:1400);
+}
+
+/* ── 연애 셀 ── */
+/* 연애 4단계는 칸이 결정한다: 💗첫 데이트(3) → 💕연애(10) → 💍프러포즈(17) → 💔권태기(23).
+   아이콘이 약속한 단계가 그대로 온다. */
+const LOVE_CELL_STAGE = { 3:"date", 10:"dating", 17:"propose", 23:"slump" };
+/* ── 데이트 장소 ── 화려한 곳일수록 호감이 크게 오르지만 지갑이 얇아진다. */
+const YOUTH_DATE_PLACES = [
+  {text:"근사한 맛집", ai:"🍽️", aff:9,  eff:{charm:2,money:-50},           mood:"happy",  res:"분위기 좋은 곳에서 마주 앉았어요."},
+  {text:"함께 여행",   ai:"✈️", aff:14, eff:{charm:3,health:1,money:-120}, mood:"happy",  res:"둘만의 여행, 평생 갈 추억이 됐어요."},
+  {text:"전시회",     ai:"🎨", aff:7,  eff:{charm:1,intelligence:2,money:-20}, mood:"normal", res:"조용히 걸으며 취향을 나눴어요."}
+];
+function youthDateCell(p, npc){
+  const av=youthAvatar(p);
+  const heroHTML=`<div class="romance-faces"><div class="rf-me" id="meFace">${imgTag(av.image,av.fallback,"height:100%;width:auto;object-fit:contain")}</div><div class="rf-heart beat">💗</div><div class="rf-npc" id="npcFace">${imgTag(npcFace(npc,"normal"),npc.baseFallback||"🙂","height:100%;width:auto;object-fit:contain")}</div></div>`;
+  const sc={ chip:`💗 ${npc.name}와 데이트`, say:`${npc.name}${jo(npc.name,'와과')} 어디로 데이트 갈까요?`, sub:"화려한 곳일수록 마음은 가까워지지만 지갑은 얇아져요", choices:YOUTH_DATE_PLACES };
+  showSceneMsg(heroHTML, sc.chip, sc.say, sc.sub);
+  document.getElementById("turnCount").textContent = p.type==="user"?"연애":"상대 연애";
+  if(p.type==="user"){
+    setMid("💗 데이트","어디로<br>갈까요?","");
+    document.getElementById("actionPanel").innerHTML=`<div class="ap-label">${sc.sub}</div>${choiceCardsHTML(sc.choices)}`;
+    window._sc=sc; window._scP=p;
+  }else{
+    setMid(`🌸 ${p.name}의 데이트`,"어디로 갈지<br>고민 중이에요…","");
+    document.getElementById("actionPanel").innerHTML=`<div class="ap-label">${p.name}${jo(p.name,'이가')} 데이트 장소를 고르고 있어요…</div>${choiceCardsHTML(sc.choices,{ai:true})}`;
+    const idx=aiChoiceIndex(p, sc.choices);
+    setTimeout(()=>{ document.getElementById("actionPanel").innerHTML=`<div class="ap-label">${p.name}${jo(p.name,'은는')} 「${sc.choices[idx].text}」${jo(sc.choices[idx].text,'을를')} 골랐어요</div>${choiceCardsHTML(sc.choices,{ai:true,picked:idx})}`; applyChoiceResult(p, sc, idx, true); }, 1000);
+  }
+}
+/* 청혼 기회: 시대마다 두 번까지, 한 번 거절당하면 3라운드는 마음을 추스른다.
+   (예전엔 시대당 한 번뿐이라 성공률 40%짜리 한 번에 결혼이 갈렸다 — 가정형 봇 4판 결혼 0%) */
+function canPropose(p){
+  const n=(p.proposeCount&&p.proposeCount[STAGE_KEY])||0;
+  return n<2 && (p.proposeLastRound==null || p.proposeLastAt!==STAGE_KEY || round-p.proposeLastRound>=3);
+}
+function markPropose(p){
+  p.proposeCount=p.proposeCount||{}; p.proposeCount[STAGE_KEY]=(p.proposeCount[STAGE_KEY]||0)+1;
+  p.proposeLastRound=round; p.proposeLastAt=STAGE_KEY;
+}
+function loveCell(p){
+  const phase=LOVE_CELL_STAGE[p.childPos]||"date";
+  if(p.isMarried){ marriedLifeCell(p); return; }
+  // 청혼할 수 있는 사람이 있으면 💍칸이 아니어도 연애 칸에서 청혼 기회가 온다
+  // (예전엔 💍칸에 정확히 멈춰야만 열려서, 봇 3판 내내 아무도 결혼하지 못했다)
+  if(canPropose(p) && marriageCandidates(p).length && (phase==="propose" || Math.random()<0.6)){ proposeCell(p); return; }
+  if((phase==="date"||phase==="dating") && typeof youthDateCell==="function"){ youthDateCell(p, crushOf(p)); return; }
+  sceneCell(p);
+}
+function marriedLifeCell(p){
+  const npc=npcOf(p.spouseId);
+  const sc={ chip:"결혼 생활", say:`${p.spouseName}와 함께하는 날이에요`, sub:"관계는 저절로 유지되지 않아요",
+    choices:[
+      { text:"시간을 함께 보낸다", ai:"💞", aff:8, eff:{relationship:4, money:-25}, res:"가까워졌어요" },
+      { text:"일에 집중한다", ai:"💼", aff:-7, eff:{money:45, intelligence:3}, res:"통장은 늘고 거리는 멀어졌어요" },
+      { text:"적당히 균형", ai:"⚖️", aff:1, eff:{health:2, money:10}, res:"무난한 하루였어요" }
+    ] };
+  showSceneMsg(`<div class="hero-ava">${imgTag(npcFace(npc,"happy"),"💞","max-height:150px")}</div>`, sc.chip, sc.say, sc.sub);
+  if(p.type==="user"){
+    setMid("💞 결혼 생활","오늘은<br>어떻게 보낼까요?","");
+    document.getElementById("actionPanel").innerHTML=`<div class="ap-label">${sc.sub}</div>${choiceCardsHTML(sc.choices)}`;
+    window._sc={chip:sc.chip, choices:sc.choices, spouse:true}; window._scP=p;
+  }else{
+    document.getElementById("actionPanel").innerHTML=`<div class="ap-label">${p.name}${jo(p.name,'이가')} 고민하고 있어요…</div>${choiceCardsHTML(sc.choices,{ai:true})}`;
+    const idx=aiChoiceIndex(p, sc.choices);
+    setTimeout(()=>{
+      document.getElementById("actionPanel").innerHTML=`<div class="ap-label">${p.name}${jo(p.name,'은는')} 「${sc.choices[idx].text}」${jo(sc.choices[idx].text,'을를')} 선택했어요</div>${choiceCardsHTML(sc.choices,{ai:true,picked:idx})}`;
+      const c=sc.choices[idx];
+      if(c.aff) addAff(p, p.spouseId, c.aff);
+      applyChoiceResult(p, sc, idx, true);
+    }, 1000);
+  }
+}
+
+/* ── 프러포즈 ── */
+function proposeCell(p){
+  const cands=marriageCandidates(p);
+  if(p.type!=="user"){ aiPropose(p); return; }
+  const top=cands[0];
+  p.proposeTried=true; p.proposeTriedAt=STAGE_KEY; markPropose(p);
+  const choices=[
+    { text:`${top.npc.name}에게 청혼한다`, ai:"💍", propose:top.npc.id },
+    { text:"아직은 이르다", ai:"⏳", propose:null }
+  ];
+  showSceneMsg(`<div class="hero-ava">${imgTag(npcFace(top.npc,"happy"),"💗","max-height:150px")}</div>`,
+    "프러포즈", `${top.npc.name}와 오래 함께했어요`, "지금 결혼하면 자녀가 일찍 자랍니다");
+  setMid("💍 결정","인생에서<br>가장 큰 선택 중 하나","");
+  document.getElementById("actionPanel").innerHTML=
+    `<div class="ap-label">${twoTimingCount(p)>=2?"⚠️ 마음을 나눠준 사람이 여럿이에요":"오래 쌓아온 마음이에요"}</div>${choiceCardsHTML(choices,{handler:"choosePropose"})}`;
+  window._proposeChoices=choices;
+}
+function choosePropose(i){
+  if(busy) return; busy=true;
+  const u=userP(); const c=window._proposeChoices[i];
+  if(!c.propose){ log(`⏳ <b>${u.name}</b> — 결혼은 조금 더 뒤로 미뤘어요`); busy=false; nextTurn(); return; }
+  const npc=npcOf(c.propose);
+  const aff=affOf(u,c.propose);
+  let pr = 0.38 + (aff-60)*0.012 + (u.stats.charm-50)*0.004 + (u.stats.relationship-50)*0.004;
+  const ch=getChar(u); if(ch&&ch.passive&&ch.passive.loveBonus) pr+=ch.passive.loveBonus;
+  if(twoTimingCount(u)>=2) pr-=0.22;   // 양다리는 청혼에서 대가를 치른다
+  if(queenActive(u)){ pr+=0.18; u.queenBeeRounds--; renderBag(); }   // 👑 여왕벌: 청혼 성공률↑
+  runTiming({kind:"청혼", icon:"💍", title:"진심을 전하는 순간", desc:"말할 <b>타이밍</b>이 전부일 때가 있어요.", accent:"var(--pink)"}, function(v){
+    const ok = Math.random() < Math.max(0.05, Math.min(0.95, pr+v.bonus));
+    if(ok){ doMarry(u, npc, "youth"); showProposeResult(u, npc, true, v); }
+    else{ addAff(u, npc.id, -18); applyStat(u,{health:-4, charm:-3}); showProposeResult(u, npc, false, v); }
+  });
+}
+function showProposeResult(p, npc, ok, v){
+  const mood = ok? "happy":"sad";
+  document.getElementById("modal").innerHTML=`
+    <span class="m-type" style="background:${ok?"var(--pink)":"var(--muted)"}">💍 청혼</span>
+    <h2>${ok?"승낙받았어요!":"거절당했어요"}</h2>
+    <div style="margin:12px 0">${imgTag(npcFace(npc,mood), ok?"💞":"🥲", "max-height:140px")}</div>
+    <p class="m-desc">${ok
+      ? `<b>${npc.name}</b>${jo(npc.name,'와과')} 결혼했어요.<br>청년기에 가정을 이루면 자녀가 일찍 자라, <b>노년에 용돈을 오래 받습니다.</b><br><small>결혼식 비용 ${WEDDING_COST} · 축의금 +${p.weddingGiftTotal}</small>`
+      : `마음이 닿지 않았어요. <small>${v.label}</small>`}</p>
+    <button class="btn btn-primary" style="margin-top:12px" onclick="closeModalNext()">계속 →</button>`;
+  document.getElementById("modalOverlay").classList.add("on");
+  renderRival(); savePlayers();
+}
+function closeModalNext(){
+  document.getElementById("modalOverlay").classList.remove("on");
+  busy=false; nextTurn();
+}
+function doMarry(p, npc, at){
+  p.isMarried=true; p.hasPartner=true;
+  p.spouseId=npc.id; p.spouseName=npc.name; p.spouseJob=npc.secretJob;
+  p.marriedAt=at; p.currentPartnerId=npc.id;
+  p.marriageHistory=p.marriageHistory||[];
+  p.marriageHistory.push({stage:at, npc:npc.id, round:round});
+  // 축의금: 인간관계 + 어릴 때 쌓은 친구 flag (카드 설명에 '축의금 보너스'가 예고돼 있음)
+  const f=p.eventFlags||{};
+  const gift = Math.max(0, 60 + (p.stats.relationship-50)*2 + (f.manyFriends?40:0) + (f.goodFriend?30:0) + (f.teacherPraise?15:0));
+  p.weddingGiftTotal=gift;
+  p.money=clampMoney((p.money||0) - WEDDING_COST + gift);
+  p.childEventUnlocked=true;
+  log(`💍 <b>${p.name}</b> — ${npc.name}${jo(npc.name,'와과')} 결혼했어요 <small>(비용 ${WEDDING_COST}, 축의금 +${gift})</small>`);
+}
+function aiPropose(a){
+  a.proposeTried=true; a.proposeTriedAt=STAGE_KEY; markPropose(a);
+  const cands=marriageCandidates(a);
+  const wantsIt = (a.aiTrait==="romantic") || (a.aiTrait==="stable" && Math.random()<0.6) || Math.random()<0.3;
+  if(cands.length && wantsIt && Math.random()<0.6){ doMarry(a, cands[0].npc, "youth"); }
+  else log(`⏳ <b>${a.name}</b> — 아직 결혼 생각은 없어 보여요`);
+  renderRival(); savePlayers();
+  setTimeout(()=>{ busy=false; nextTurn(); }, 700);
+}
+
+/* ── 결혼 이야기 셀 ── */
+function marryCell(p){
+  if(p.isMarried){ marriedLifeCell(p); return; }
+  sceneCell(p);
+}
+
+/* ── 카드 ── */
+/* 청년기 판에는 청년기 카드만. habit(초등 전용)은 뽑지 않는다. */
+function youthCardPool(){ return cardPool(["youthlife","talent","growth","bond","luck"]); }
+function cardCell(p){
+  // 무대도 카드 칸으로 갈아준다 (안 하면 이전 칸의 씬이 그대로 남는다)
+  showSceneMsg(`<div class="hero-ava">${avaImg(p)}</div>`, "🎴 기회 카드",
+    "예상 못 한 기회가 찾아왔어요.",
+    p.type==="user" ? "카드 한 장을 골라보세요." : `${p.name}${jo(p.name,'이가')} 카드를 고르는 중…`);
+  if(p.type==="user"){
+    setMid("🎴 기회 카드","기회가<br>찾아왔어요","");
+    drawCards(youthCardPool(), 3, function(card){
+      const applied=applyStat(p, card.effect||{});
+      if(card.flag){ p.eventFlags[card.flag]=true; }
+      p.youthCards=p.youthCards||[]; p.youthCards.push(card.id);
+      log(`🎴 <b>${p.name}</b> — 「${card.name}」 ${deltaStr(applied)}`);
+      renderRival(); savePlayers();
+      busy=false; nextTurn();
+    });
+  }else{
+    aiCardShow(p, youthCardPool(), function(card){
+      const applied=applyStat(p, card.effect||{});
+      if(card.flag){ p.eventFlags[card.flag]=true; }
+      log(`🎴 <b>${p.name}</b> — 「${card.name}」 ${deltaStr(applied)}`,"a");
+      flashMini(p, applied); renderRival(); savePlayers();
+      return deltaStr(applied);
+    }, function(){ busy=false; nextTurn(); });
+  }
+}
+
+/* ── 보너스 (먼저 도착한 뒤) ── */
+function bonusActivity(p){
+  const choices=[
+    { text:"부업을 한다", ai:"💰", eff:{money:40, health:-3}, res:"조금 더 벌었어요" },
+    { text:"몸을 챙긴다", ai:"🏃", eff:{health:5}, res:"컨디션이 좋아졌어요" },
+    { text:"사람을 만난다", ai:"☕", eff:{relationship:5, money:-15}, res:"좋은 시간이었어요" }
+  ];
+  const sc={chip:"남은 시간", choices:choices};
+  showSceneMsg(`<div class="hero-ava">${avaImg(p)}</div>`, "남은 시간", "서른까지 남은 시간이에요", "무엇을 해볼까요?");
+  if(p.type==="user"){
+    setMid("⭐ 남은 시간","무엇을<br>해볼까요?","");
+    document.getElementById("actionPanel").innerHTML=`<div class="ap-label">남은 시간에 무엇을 해볼까요?</div>${choiceCardsHTML(choices)}`;
+    window._sc=sc; window._scP=p;
+  }else{
+    document.getElementById("actionPanel").innerHTML=`<div class="ap-label">${p.name}${jo(p.name,'이가')} 고민하고 있어요…</div>${choiceCardsHTML(choices,{ai:true})}`;
+    const idx=aiChoiceIndex(p, choices);
+    setTimeout(()=>{
+      document.getElementById("actionPanel").innerHTML=`<div class="ap-label">${p.name}${jo(p.name,'은는')} 「${choices[idx].text}」${jo(choices[idx].text,'을를')} 선택했어요</div>${choiceCardsHTML(choices,{ai:true,picked:idx})}`;
+      applyChoiceResult(p, sc, idx, true);
+    }, 900);
+  }
+}
+
+/* ── 라운드 정산 ── */
+function nextTurn(){
+  busy=false;
+  document.getElementById("scene").style.display="none";
+  var _cur=players[turnIdx]; if(_cur && _cur._extraTurn){ _cur._extraTurn=false; beginTurn(); return; }
+  if(turnIdx===1){ showRoundSummary(); return; }
+  turnIdx=1; beginTurn();
+}
+function settleRoundIncome(p){
+  const inc=roundIncome(p);
+  p.money=clampMoney((p.money||0)+inc.net);
+  p.youthIncomeTotal=(p.youthIncomeTotal||0)+Math.max(0,inc.salary+inc.side);
+  p.totalSalaryEarned=(p.totalSalaryEarned||0)+inc.salary;
+  // 결혼했으면 배우자 수입 + 호감도 자연 감소
+  if(p.isMarried){
+    const sj=JOBS.find(j=>j.name===p.spouseJob);
+    const sp=sj? Math.round((sj.baseSalary||0)*0.5) : 12;
+    p.money=clampMoney((p.money||0)+sp);
+    addAff(p, p.spouseId, -2);
+  }
+  // 양다리 발각
+  if(!p.isMarried && twoTimingCount(p)>=2 && Math.random()<0.25){
+    p.twoTimingCaught=(p.twoTimingCaught||0)+1;
+    p.romanceReputationRisk=(p.romanceReputationRisk||0)+1;
+    for(const id in p.affinity){ if(p.affinity[id]>=TWO_TIME_LINE) p.affinity[id]=Math.max(0,p.affinity[id]-30); }
+    applyStat(p,{relationship:-10, charm:-4});
+    log(`💔 <b>${p.name}</b> — 마음을 나눈 게 들켰어요… <small>모두의 호감도가 떨어졌어요</small>`);
+  }
+  return inc;
+}
+function showRoundSummary(){
+  const u=userP(), a=aiP();
+  const iu=settleRoundIncome(u), ia=settleRoundIncome(a);
+  renderRival(); savePlayers(); saveGameState();
+  const line=(p,inc)=>`<div class="rule"><span class="ri">${p.type==="user"?"🙂":"🌸"}</span><span><b>${p.name}</b> — ${jobFeel(p)}<br>
+    <small>월급 ${inc.salary} · 재능 부수입 ${inc.side} · 생활비 -${inc.cost} → <b>${inc.net>=0?"+":""}${inc.net}</b> · ${moneyFeel(p)}</small></span></div>`;
+  document.getElementById("modal").innerHTML=`
+    <span class="m-type" style="background:var(--blue)">📅 라운드 ${round}</span>
+    <h2>한 해가 지나갔어요</h2>
+    <div class="rule-grid">${line(u,iu)}${line(a,ia)}</div>
+    <button class="btn btn-primary" style="margin-top:14px" onclick="startNextRound()">다음 해로 →</button>`;
+  document.getElementById("modalOverlay").classList.add("on");
+}
+function startNextRound(){
+  document.getElementById("modalOverlay").classList.remove("on");
+  round++; turnIdx=0; busy=false;
+  if(round>TOTAL_ROUNDS){ stageSettle(); return; }
+  beginTurn();
+}
+
+/* ── 스테이지 정산 ── */
+function youthTitle(p){
+  if(p.isMarried && p.job) return "가정과 일을 모두 잡은 청년";
+  if(p.isMarried) return "사랑을 먼저 택한 청년";
+  if(p.job && (p.money||0)>=400) return "빠르게 자리 잡은 청년";
+  if(p.job) return "제 몫을 하는 청년";
+  return "아직 길을 찾는 중인 청년";
+}
+function stageSettle(){
+  players.forEach(p=>{
+    p.stageDone=p.stageDone||{}; p.stageDone.youth=true;
+    p.youthPos=p.childPos;
+    p.stagePerformance=p.stagePerformance||{};
+    p.stagePerformance.youth={ money:p.money||0, job:p.jobName||null, married:!!p.isMarried, marriedAt:p.marriedAt||null };
+    p.youthSummaryLine=youthTitle(p);
+    p.chapterSummaries=p.chapterSummaries||[];
+    p.chapterSummaries.push({stage:"youth", title:youthTitle(p), money:p.money||0, job:p.jobName||"무직", married:!!p.isMarried});
+  });
+  GS.currentStage="adult";
+  savePlayers(); saveGameState();
+  const u=userP(), a=aiP();
+  const card=(p)=>{
+    const av=youthAvatar(p);
+    const k=topTalent(p);
+    return `<div class="settle-person ${p.type}">
+      <div class="settle-face">${imgTag(av.image, av.fallback, "max-height:130px")}</div>
+      <div class="settle-name">${p.type==="user"?"🙂":"🌸"} ${p.name}</div>
+      <div class="rc-sub">${youthTitle(p)}</div>
+      <div class="rc-sub">${jobFeel(p)}</div>
+      <div class="rc-sub">${moneyFeel(p)}</div>
+      <div class="rc-sub">${p.isMarried? `💍 ${p.spouseName}` : "미혼"}</div>
+      <div class="rc-sub">${k? `${TALENT_CATEGORIES[k].emoji} ${TALENT_CATEGORIES[k].name} ${TALENT_STAR[talentLevel(p,k)]}` : "재능 없음"}</div>
+    </div>`;
+  };
+  document.getElementById("modal").innerHTML=`
+    <span class="m-type" style="background:var(--purple)">🎓 청년기 정산</span>
+    <h2>서른이 되었어요</h2>
+    <p class="m-desc">이십 대가 지나갔어요. 지금 쥔 것이 다음 삼십 년의 출발점이 됩니다.</p>
+    <div class="settle-duo">${card(u)}${card(a)}</div>
+    <button class="btn btn-primary" style="margin-top:14px" onclick="goNextStage('${STAGE_NEXT}')">성인기로 →</button>`;
+  document.getElementById("modalOverlay").classList.add("on");
+}
+
+window.onload=init;
+</script>
+<script src="./world/world.js"></script>
+<script src="./fx/fx.js"></script>
+</body>
+</html>

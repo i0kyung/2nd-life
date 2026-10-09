@@ -1,0 +1,20 @@
+# 작업용 백업 · 쓰지 않는 옛 그림
+_backup_*/
+_orphan/
+image/user/_old_*/
+image/stage_middle.html
+
+# 개발용 바로가기 (청년기부터 테스트)
+_청년기_바로가기.html
+
+# 시뮬레이션 도구
+tools/sim/node_modules/
+tools/sim/runs/
+
+# OS · 에디터
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.log

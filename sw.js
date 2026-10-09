@@ -1,6 +1,6 @@
 /* 「제2의 인생」 서비스 워커 — 한 번 플레이하면 오프라인에서도 이어서 할 수 있다.
    화면·스크립트는 미리 받아두고, 큰 그림(image/)은 처음 볼 때 저장한다. */
-const CACHE = "second-life-v2"; // v2: 그림 경량화
+const CACHE = "second-life-v3"; // v3: 바퀴 도는 말판 · 주사위 1~6
 const CORE = [
   "./", "./index.html", "./result.html",
   "./stage_child.html", "./stage_elementary.html", "./stage_middle.html", "./stage_high.html",

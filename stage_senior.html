@@ -1315,8 +1315,10 @@ function ensureFields(p){
 
 const STAGE_KEY = "senior";
 const STAGE_NEXT = "result.html";
-const TOTAL_ROUNDS = 12;      // 노년기 — 거두는 시간
+const TOTAL_ROUNDS = 8;      // 노년기 — 거두는 시간
 const FINISH_CELL = 27;       // 0~27 = 28칸
+const BOARD_LEN = FINISH_CELL+1; // 끝없이 도는 말판
+const STAGE_LOOP_KEY = "senior";
 
 const LIFE_TIMELINE = [
   {key:"child",ico:"🍼",name:"유년기"},{key:"elementary",ico:"🎒",name:"초등"},
@@ -2144,11 +2146,11 @@ function showTransition(){
   const u=userP();
   const k=topTalent(u), lv=k?talentLevel(u,k):0;
   const talentBox = k
-    ? `<div class="rule"><span class="ri">${TALENT_CATEGORIES[k].emoji}</span><span>어린 시절 쌓아온 <b>${TALENT_CATEGORIES[k].name}</b> — ${talentFeel(lv)} ${TALENT_STAR[lv]}<br><small>이 시대부터 재능은 돈이 됩니다.</small></span></div>`
+    ? `<div class="rule"><span class="ri">${TALENT_CATEGORIES[k].emoji}</span><span>어린 시절 쌓아온 <b>${TALENT_CATEGORIES[k].name}</b> — ${talentFeel(lv)} ${TALENT_STAR[lv]}<br><small>재능은 노년의 즐거움이자 쏠쏠한 부수입이 돼요.</small></span></div>`
     : `<div class="rule"><span class="ri">🌫️</span><span>뚜렷하게 쌓아온 재능은 없어요.<br><small>대신 어떤 길이든 편견 없이 갈 수 있어요.</small></span></div>`;
   document.getElementById("modal").innerHTML=`
     <span class="m-type" style="background:var(--purple)">🌇 노년기</span>
-    <h2>쉰, 인생의 후반전이 열려요</h2>
+    <h2>예순, 인생의 마지막 장이 열려요</h2>
     <p class="m-desc">쌓아온 것을 돌아보고, 남은 날들을 <b>여유롭게</b> 보내는 시기예요.</p>
     <div class="rule-grid">${talentBox}</div>
     <button class="btn btn-primary" style="margin-top:14px" onclick="closeTransition()">남은 길을 걸으러 가기 →</button>`;
@@ -2156,7 +2158,10 @@ function showTransition(){
 }
 function closeTransition(){
   document.getElementById("modalOverlay").classList.remove("on");
-  trackChoice();
+  // 노년기에는 새로 취업하지 않는다. 지금까지의 일을 이어가다 🎏 은퇴 칸에서 내려놓는다.
+  const u=userP();
+  log(`🍂 <b>${u.name}</b> — ${u.job?`${u.job.emoji} ${u.job.name}의 마지막 몇 해를 보내요`:"일에서 한발 물러나 연금으로 지내요"}`);
+  startYouth();
 }
 
 /* ── 진로 선택 (꿈) ── */
@@ -2280,12 +2285,12 @@ function beginTurn(){
   const p=curP();
   renderRival(); renderBoard();
   document.getElementById("scene").style.display="none";
-  if(p.childPos>=FINISH_CELL){ bonusActivity(p); return; }
+  
   if(p.type==="user") showUserRoll(p); else showAiRoll(p);
 }
 function showUserRoll(p){
   busy=false; p=p||userP();
-  setMid("🎲 내 차례",`현재 <b>${p.childPos+1}칸</b> · 도착까지 ${Math.max(0,FINISH_CELL-p.childPos)}칸`,"큰 버튼을 꾹 눌렀다 떼세요");
+  setMid("🎲 내 차례",`현재 <b>${p.childPos+1}칸</b> · 🎲 남은 주사위 <b>${TOTAL_ROUNDS-round+1}</b>번`,"큰 버튼을 꾹 눌렀다 떼세요");
   document.getElementById("actionPanel").innerHTML=`
     <div class="roll-gauge" id="rollGauge"><div class="rg-perfect" id="rgPerfect"></div><div class="rg-good" id="rgGood"></div><div class="rg-marker" id="rgMarker"></div></div>
     <div class="roll-hint" id="rollHint">버튼을 꾹 누르면 게이지가 움직여요</div>
@@ -2295,7 +2300,7 @@ function showUserRoll(p){
 function doUserDice(v){
   if(busy) return; busy=true;
   const p=userP(); const steps=rollValue(v);
-  const from=p.childPos, to=Math.min(FINISH_CELL,from+steps);
+  const from=p.childPos, to=(from+steps)%BOARD_LEN;
   p._lastSteps=steps; p._moveTarget=to; renderBoard();
   setMid("🎲 주사위 결과!",`<span class="big">+${steps}칸</span>${from+1}칸 → ${to+1}칸`,`타이밍 ${v.label}`);
   log(`🎲 <b>${p.name}</b> 주사위 +${steps}칸 (${v.label})`,"u");
@@ -2303,12 +2308,12 @@ function doUserDice(v){
   movePiece(p, steps, ()=>arriveCell(p));
 }
 function rollValue(v){
-  // 고교와 동일한 방식: verdict가 실제로 확률을 바꾼다 (min(4)로 보너스가 증발하지 않도록)
-  let s=rnd(1,3);
-  if(v.key==="perfect" && Math.random()<0.55) s=Math.min(4,s+1);
-  else if(v.key==="good" && Math.random()<0.32) s=Math.min(4,s+1);
-  else if(v.key==="miss" && Math.random()<0.4) s=Math.max(1,s-1);
-  return Math.max(1,s);
+  // 주사위 1~6. 타이밍을 잘 맞추면 한 번 더 굴려 큰 눈을, 놓치면 작은 눈을 갖는다
+  let s=rnd(1,6);
+  if(v.key==="perfect") s=Math.max(s,rnd(1,6));
+  else if(v.key==="good" && Math.random()<0.4) s=Math.max(s,rnd(1,6));
+  else if(v.key==="miss") s=Math.min(s,rnd(1,6));
+  return s;
 }
 function aiTimingSkill(p){
   const b={stable:0.5,challenger:0.62,romantic:0.5,tycoon:0.6,grinder:0.66}[p.aiTrait]||0.5;
@@ -2323,7 +2328,7 @@ function showAiRoll(p){
     if(r<skill*0.4)key="perfect"; else if(r<skill*0.4+0.35)key="good"; else if(r<skill*0.4+0.65)key="ok"; else key="miss";
     const v=Object.assign({key:key}, TVERDICT[key]);
     p.timingHistory.push({where:"주사위",key});
-    const steps=rollValue(v); const from=p.childPos, to=Math.min(FINISH_CELL,from+steps);
+    const steps=rollValue(v); const from=p.childPos, to=(from+steps)%BOARD_LEN;
     p._lastSteps=steps; p._moveTarget=to; renderBoard();
     setMid(`🌸 ${p.name} 이동`,`<span class="big">+${steps}칸</span>${from+1}칸 → ${to+1}칸`,`타이밍 ${v.label}`);
     log(`🌸 <b>${p.name}</b> 판정 ${v.label} · +${steps}칸`,"a");
@@ -2331,15 +2336,48 @@ function showAiRoll(p){
     movePiece(p, steps, ()=>arriveCell(p));
   }, 1100);
 }
+/* ── 바퀴 돌기 ── 말판은 끝없이 이어진다. 출발 칸을 지나면 한 바퀴 보너스를 받고,
+   출발 · 도착 · 갈림길 같은 고정 칸을 뺀 나머지 칸이 새로 섞인다(매 바퀴 다른 길). */
+const LOOP_FIXED_TYPES=["start","finish","branch","retire"];
+const LOOP_STOP_TYPES=["retire"];   // 은퇴 칸은 처음 지나갈 때 반드시 멈춘다
+function loopTables(){
+  const t=[SENIOR_BOARD, CELL_EVENTS];
+  if(typeof LOVE_CELL_STAGE!=="undefined") t.push(LOVE_CELL_STAGE);
+  if(typeof ROMANCE_CELL_STAGE!=="undefined") t.push(ROMANCE_CELL_STAGE);
+  return t;
+}
+function shuffleBoard(){
+  const idx=[]; for(let i=0;i<BOARD_LEN;i++){ if(!LOOP_FIXED_TYPES.includes((SENIOR_BOARD[i]||{}).type)) idx.push(i); }
+  const perm=idx.slice(); for(let i=perm.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [perm[i],perm[j]]=[perm[j],perm[i]]; }
+  loopTables().forEach(T=>{
+    const old={}; idx.forEach(i=>{ old[i]=T[i]; });
+    idx.forEach((i,n)=>{ const v=old[perm[n]]; if(v===undefined) delete T[i]; else T[i]=v; });
+  });
+}
+function passStart(p){
+  p.lapCount=(p.lapCount||0)+1;
+  const ap=applyStat(p,{luck:2, relationship:1});
+  if(typeof p.money==="number") p.money=clampMoney(p.money+30);
+  log(`🔄 <b>${p.name}</b> 한 바퀴! ${deltaStr(ap)} · 자산+30 <small>길이 새로 바뀌었어요</small>`, p.type==="user"?"u":"a");
+  shuffleBoard(); renderBoard();
+  try{ roadToast("🔄", `${p.type==="user"?"한 바퀴!":p.name+" 한 바퀴!"} 칸이 새로 섞였어요`, true); }catch(e){}
+}
+function mustStopAt(p){
+  const c=SENIOR_BOARD[p.childPos]||{};
+  if(!LOOP_STOP_TYPES.includes(c.type)) return false;
+  p.loopStops=p.loopStops||{}; const key=STAGE_LOOP_KEY+"_"+c.type;
+  if(p.loopStops[key]) return false;
+  p.loopStops[key]=true; return true;
+}
 function movePiece(p, steps, cb){
   let remain=steps;
   function hop(){
-    if(remain<=0 || p.childPos>=FINISH_CELL){
+    if(remain<=0){
       p.seniorPos=p.childPos; delete p._moveTarget; delete p._lastSteps; renderBoard();
       const c=document.getElementById(`cell${p.childPos}`); if(c){c.classList.remove("arrive");void c.offsetWidth;c.classList.add("arrive");}
       setTimeout(()=>{ cb&&cb(); },260); return;
     }
-    p.childPos=Math.min(FINISH_CELL, p.childPos+1); remain--; p.seniorPos=p.childPos;
+    p.childPos=(p.childPos+1)%BOARD_LEN; remain--; if(p.childPos===0) passStart(p); if(remain>0 && mustStopAt(p)) remain=0; p.seniorPos=p.childPos;
     placeToken(p); highlightCells();
     const tok=document.getElementById(`tok_${p.id}`); if(tok){tok.classList.remove("hop");void tok.offsetWidth;tok.classList.add("hop");}
     setTimeout(hop,240);
@@ -2406,6 +2444,8 @@ function rollRoadLuck(p, done){
 }
 function arriveCell(p){ rollRoadLuck(p, function(){ arriveCellReal(p); }); }
 function arriveCellReal(p){
+  mustStopAt(p);
+  if(p.childPos===0||p.childPos===FINISH_CELL){ busy=false; bonusActivity(p); return; }
   // 주사위→이동 동안 걸어둔 잠금을 여기서 푼다. 이 시점부터 다시 선택을 받는다.
   busy=false;
   p.seniorPos=p.childPos;
@@ -2534,7 +2574,7 @@ function applyFamily(p,opt,idx){
 function sceneCell(p){
   // 칸 전용 풀에서 랜덤. 아이콘이 약속한 사건은 지키되, 매번 다른 이야기가 나온다.
   const pool=CELL_EVENTS[p.childPos];
-  if(!pool||!pool.length){ console.warn("씬 없는 칸:",p.childPos,SENIOR_BOARD[p.childPos]); nextTurn(); return; }
+  if(!pool||!pool.length){ bonusActivity(p); return; }   // 이야기가 없는 칸(갈림길 등)은 쉼표 칸으로
   const sc=pick(pool);
   showSceneMsg(`<div class="hero-ava">${avaImg(p)}</div>`, sc.chip, sc.say, sc.sub);
   document.getElementById("turnCount").textContent = p.type==="user"?"내 선택":"상대 선택";
@@ -2745,10 +2785,10 @@ function bonusActivity(p){
     { text:"사람을 만난다", ai:"☕", eff:{relationship:5, money:-15}, res:"좋은 시간이었어요" }
   ];
   const sc={chip:"남은 시간", choices:choices};
-  showSceneMsg(`<div class="hero-ava">${avaImg(p)}</div>`, "남은 시간", "서른까지 남은 시간이에요", "무엇을 해볼까요?");
+  showSceneMsg(`<div class="hero-ava">${avaImg(p)}</div>`, "남은 시간", "잠시 쉬어 가는 칸이에요", "무엇을 해볼까요?");
   if(p.type==="user"){
-    setMid("⭐ 남은 시간","무엇을<br>해볼까요?","");
-    document.getElementById("actionPanel").innerHTML=`<div class="ap-label">남은 시간에 무엇을 해볼까요?</div>${choiceCardsHTML(choices)}`;
+    setMid("☕ 쉼표 칸","무엇을<br>해볼까요?","");
+    document.getElementById("actionPanel").innerHTML=`<div class="ap-label">쉬는 동안 무엇을 해볼까요?</div>${choiceCardsHTML(choices)}`;
     window._sc=sc; window._scP=p;
   }else{
     document.getElementById("actionPanel").innerHTML=`<div class="ap-label">${p.name}${jo(p.name,'이가')} 고민하고 있어요…</div>${choiceCardsHTML(choices,{ai:true})}`;

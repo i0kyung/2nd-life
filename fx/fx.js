@@ -109,11 +109,11 @@
   function standOnStage(p, isUser){
     try{
       if(typeof showSceneMsg!=="function" || typeof avaImg!=="function" || !p) return;
-      const left=Math.max(0,(typeof FINISH_CELL!=="undefined"?FINISH_CELL:27)-p.childPos);
+      const left=(typeof TOTAL_ROUNDS!=="undefined"&&typeof round!=="undefined")? Math.max(0,TOTAL_ROUNDS-round+1) : 0;
       showSceneMsg(`<div class="hero-ava">${avaImg(p)}</div>`,
         isUser ? "🎲 내 차례" : `🌸 ${p.name}의 차례`,
         isUser ? "오늘은 어떤 하루가 될까요?" : `${p.name}${typeof jo==="function"?jo(p.name,"이가"):"이"} 주사위를 만지작거려요`,
-        isUser ? `도착까지 ${left}칸 남았어요` : "어디에 멈출지 지켜봐요");
+        isUser ? (left?`이 시대 주사위 ${left}번 남았어요`:"오늘은 어떤 칸에 멈출까요?") : "어디에 멈출지 지켜봐요");
       const tc=$("turnCount"); if(tc) tc.textContent="";
     }catch(e){}
   }
